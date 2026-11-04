@@ -1,15 +1,36 @@
 {
+  "id": "./",
   "name": "Será Que Devo? Pro",
   "short_name": "Será Que Devo?",
-  "description": "Organizador financeiro pessoal com a Pandora",
+  "description": "Organizador financeiro pessoal com a Pandora, metas, calendário e calculadoras.",
   "lang": "pt-BR",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f7fb",
   "theme_color": "#6546e8",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
   "icons": [
-    {"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

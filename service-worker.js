@@ -1,16 +1,35 @@
-/* Opcional: PWA com shell offline, mas SEM cache dos dados financeiros ou APIs do Supabase. */
-const SHELL_CACHE = 'sqd-shell-v1';
+/* Será Que Devo? Pro — PWA shell v3, atualização segura. */
+/* Não armazenar respostas do Supabase, dados financeiros ou tokens de autenticação. */
+const CACHE_NAME = 'sqd-pwa-public-shell-v3';
+const PUBLIC_SHELL = [
+  './index.html', './manifest.webmanifest', './icon-192.png',
+  './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'
+];
+
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(SHELL_CACHE).then(cache=>cache.addAll(['./index.html'])));
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(PUBLIC_SHELL))
+      .then(() => self.skipWaiting())
+  );
 });
+
 self.addEventListener('activate', event => {
-  event.waitUntil(Promise.all([
-    caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==SHELL_CACHE).map(k=>caches.delete(k)))),
-    self.clients.claim()
-  ]));
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(key =>
+        (key === 'sqd-shell-v1' || key.startsWith('sqd-pwa-public-shell-'))
+        && key !== CACHE_NAME
+      ).map(key => caches.delete(key))
+    )).then(() => self.clients.claim())
+  );
 });
+
 self.addEventListener('fetch', event => {
-  if(event.request.mode!=='navigate' || event.request.method!=='GET')return;
-  event.respondWith(fetch(event.request).catch(()=>caches.match('./index.html')));
+  const request = event.request;
+  if (request.method !== 'GET' || request.mode !== 'navigate') return;
+  if (new URL(request.url).origin !== self.location.origin) return;
+  event.respondWith(
+    fetch(request).catch(() => caches.match('./index.html'))
+  );
 });

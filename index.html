@@ -4,6 +4,16 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f7f8fc"><meta name="description" content="Será Que Devo? Organização financeira pessoal e calculadoras com a Pandora.">
 <title>Será Que Devo? · Pro</title>
+<!-- PWA: instalacao Android e iOS; arquivos relativos ao diretorio do index.html -->
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<meta name="application-name" content="Será Que Devo? Pro">
+<meta name="apple-mobile-web-app-title" content="Será Que Devo?">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+
 <!-- O HTML incorpora CSS e JS do produto. Supabase e jsPDF continuam sendo bibliotecas externas. -->
 <style>:root{color-scheme:light;--bg:#f6f7fb;--surface:#fff;--surface-2:#f0f2f8;--text:#182033;--muted:#6d778b;--line:#e2e7f0;--primary:#6546e8;--primary-ink:#fff;--primary-soft:#eeeaff;--pink:#e95891;--good:#008e73;--bad:#d04465;--shadow:0 12px 32px rgba(35,43,75,.055);--radius:18px;--sidebar:#fff;--input:#fff;--art:#1b173e}
 :root[data-theme="dark"]{color-scheme:dark;--bg:#0d111c;--surface:#161d2c;--surface-2:#20283b;--text:#f1f3fc;--muted:#a2aec2;--line:#303a50;--primary:#ae97ff;--primary-ink:#171125;--primary-soft:#30264c;--pink:#f789b6;--good:#55dab7;--bad:#ff8196;--shadow:0 12px 35px rgba(0,0,0,.16);--sidebar:#121826;--input:#101725;--art:#151429}
@@ -322,7 +332,16 @@ function setupEvents(){
 }
 async function init(){if(starting)return;starting=true;try{configureBrandLogos();let chosen='light';try{chosen=localStorage.getItem('sqd-theme')||'light'}catch{}setTheme(chosen);setupEvents();switchAuthMode('login');$('#dashboard-month').value=today().slice(0,7);$('#tx-month').value=today().slice(0,7);$('#report-month').value=today().slice(0,7);categoryOptions('expense');for(const id of ['transaction-form','reminder-form','mimo-form'])document.getElementById(id).elements.date.value=today();previewInstallments();$('#connection').textContent=navigator.onLine?'Conectado à internet':'Sem conexão';tellPandora('welcome');if(!window.supabase?.createClient)throw Error('Biblioteca Supabase não carregada. Abra via HTTPS e verifique sua conexão.');db=window.supabase.createClient(CONFIG.url,CONFIG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session?.user){await activateSession(session.user)}else showLoggedOut();db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT')queueMicrotask(showLoggedOut);if(event==='PASSWORD_RECOVERY')queueMicrotask(changePassword);if(event==='SIGNED_IN'&&session?.user&&!user)queueMicrotask(()=>activateSession(session.user).catch(e=>banner(e.message)))});}catch(e){showLoggedOut();$('#auth-message').textContent='Não foi possível iniciar: '+(e.message||'falha desconhecida.');console.error('Falha de inicialização',e)}finally{$('#loading').hidden=true;starting=false}}
 window.addEventListener('load',init);
+// Instalação PWA separada da lógica de finanças e Supabase.
+// O SW armazena apenas o código/ícones públicos; nunca chamadas Supabase,
+// autenticação, informações financeiras, backups ou respostas de API.
+window.addEventListener('load', () => {
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(location.hostname)) return;
+  navigator.serviceWorker.register('./service-worker.js', { scope: './', updateViaCache: 'none' })
+    .catch(err => console.warn('PWA: registro do service worker não concluído:', err));
+});
+
 })();
 </script>
 </body></html>
-

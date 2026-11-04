@@ -1,6 +1,5 @@
 /*
- * Será Que Devo? Pro Lite
- * Supabase Auth + tabelas com RLS + navegação SPA.
+ * Será Que Devo? Pro Lite - Core Completo Integrado
  */
 const SUPABASE_URL = "https://prrnpotfbaoiruduymky.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_KlKmR2NFxpmZx84yyf0ZhA_nEcOesUi";
@@ -20,7 +19,6 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const money = value => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value) || 0);
 const isoToday = () => new Date().toLocaleDateString("en-CA");
 
-// SEGURANÇA: Prevenção básica contra XSS criando text nodes seguros via textContent
 const safeText = value => {
   const str = String(value ?? "");
   const div = document.createElement('div');
@@ -33,6 +31,11 @@ let profile = null;
 let activeView = "dashboard";
 let cache = { transactions: [], reminders: [], notes: [], goals: [], market_items: [], mimos: [] };
 let authMode = "login";
+
+let chartIncomeObj = null;
+let chartExpenseObj = null;
+let chartOverallObj = null;
+let chartMimosObj = null;
 
 const TABLES = {
   transactions: "transactions",
@@ -63,8 +66,8 @@ const PANDORA_LINES = {
     ["satisfied", "Receita registrada. Que essa energia de entrada se repita!"]
   ],
   expense: [
-    ["ironic", "Saída registrada. Foi necessidade, planejamento ou um mimo que venceu?"],
-    ["alert", "Anotei a despesa. O importante é enxergar o padrão, não se culpar."]
+    ["ironic", "Saída registrada. Foi necessidade, planejamento ou um mimo?"],
+    ["alert", "Anotei a despesa. O importante é enxergar o padrão."]
   ],
   market: [
     ["alert", "Lista de mercado na tela. Olho no total e nada de comprar com fome!"],
@@ -73,38 +76,6 @@ const PANDORA_LINES = {
   mimo: [
     ["satisfied", "Mimo anotado. Aproveitar também faz parte do plano."],
     ["ironic", "Autocuidado com orçamento? Chiquérrimo."]
-  ],
-  reminder: [
-    ["alert", "Lembrete salvo. Agora não vale dizer que esqueceu!"],
-    ["satisfied", "Agenda organizada, mente mais leve."]
-  ],
-  note: [
-    ["satisfied", "Anotado! A sua memória merece uma assistente."],
-    ["ironic", "Ideia salva antes que ela fugisse pela janela."]
-  ],
-  goal: [
-    ["rich", "Meta criada. Um passo de cada vez também chega longe."],
-    ["satisfied", "Objetivo no radar. Bora acompanhar o progresso."]
-  ],
-  delete: [
-    ["alert", "Item removido. Confira se era isso mesmo que queria."],
-    ["ironic", "Apagado. Até os dados têm direito a recomeçar."]
-  ],
-  error: [
-    ["alert", "Ops! Não consegui concluir essa ação. Confira os dados e tente novamente."],
-    ["desperate", "Deu um probleminha técnico. Respira que vamos resolver."]
-  ],
-  theme: [
-    ["satisfied", "Novo tema ativado. A beleza também precisa ser acessível."],
-    ["ironic", "Troquei a iluminação. A situação financeira continua sendo sua responsabilidade."]
-  ],
-  export: [
-    ["alert", "Arquivo exportado. Cuide dele: contém informações pessoais."],
-    ["satisfied", "Backup pronto. Organização é poder."]
-  ],
-  login: [
-    ["satisfied", "Que bom te ver por aqui! Este painel é só seu."],
-    ["rich", "Seu espaço financeiro pessoal está pronto."]
   ]
 };
 
@@ -177,12 +148,24 @@ function showApp(user) {
     form.elements.display_name.value = profile?.display_name || user.user_metadata?.display_name || "";
     form.elements.birthday.value = profile?.birthday || "";
   }
+  checkBirthdayPopup();
 }
 
 function showLoggedOut() {
   currentUser = null; profile = null;
   $("#app-shell").hidden = true;
   $("#auth-screen").hidden = false;
+}
+
+function checkBirthdayPopup() {
+  if (!profile?.birthday) return;
+  const today = new Date();
+  const currentMD = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const parts = profile.birthday.split('-');
+  if (parts.length === 3 && `${parts[1]}-${parts[2]}` === currentMD) {
+    $("#birthday-message").textContent = `Parabéns, ${profile.display_name}! 🎉 Hoje é seu dia especial!`;
+    $("#birthday-modal").style.display = "flex";
+  }
 }
 
 async function loadProfile() {
@@ -201,8 +184,7 @@ async function loadProfile() {
 async function authSubmit(event) {
   event.preventDefault();
   if (!db) {
-    showAuthMessage("Configure SUPABASE_URL e SUPABASE_ANON_KEY corretos em app.js.", true);
-    toast("Supabase não configurado.", "error");
+    showAuthMessage("Configure SUPABASE_URL e SUPABASE_ANON_KEY.", true);
     return;
   }
   const form = event.currentTarget;
@@ -214,16 +196,15 @@ async function authSubmit(event) {
   try {
     if (authMode === "signup") {
       if (!form.elements.displayName.value.trim()) throw new Error("Informe seu nome de exibição.");
-      if (!$("#terms-check").checked) throw new Error("É necessário aceitar os termos.");
-      if (password.length < 8) throw new Error("Use uma senha com pelo menos 8 caracteres.");
+      if (!$("#terms-check").checked) throw new Error("Aceite os termos.");
+      if (password.length < 8) throw new Error("Mínimo de 8 caracteres na senha.");
       const { data, error } = await db.auth.signUp({
         email, password,
         options: { data: { display_name: form.elements.displayName.value.trim() } }
       });
       if (error) throw error;
       if (!data.session) {
-        showAuthMessage("Cadastro iniciado. Confirme seu e-mail pelo link enviado.");
-        pandora("welcome");
+        showAuthMessage("Cadastro iniciado. Confirme seu e-mail.");
         return;
       }
       currentUser = data.user;
@@ -236,24 +217,18 @@ async function authSubmit(event) {
     showApp(currentUser);
     await loadAllData();
     navigate("dashboard");
-    pandora("login");
-    toast("Acesso realizado com sucesso.");
+    toast("Acesso realizado.");
   } catch (error) {
-    showAuthMessage(error.message || "Não foi possível autenticar.", true);
+    showAuthMessage(error.message || "Erro na autenticação.", true);
   } finally {
     submit.disabled = false;
   }
 }
 
 async function signOut() {
-  if (db) {
-    const { error } = await db.auth.signOut();
-    if (error) { toast(error.message, "error"); return; }
-  }
+  if (db) await db.auth.signOut();
   cache = { transactions: [], reminders: [], notes: [], goals: [], market_items: [], mimos: [] };
   showLoggedOut();
-  showAuthMessage("Você saiu da conta.");
-  pandora("welcome");
 }
 
 function navigate(view) {
@@ -261,10 +236,14 @@ function navigate(view) {
   activeView = view;
   $$(".view").forEach(section => section.classList.toggle("active", section.id === `view-${view}`));
   $$(".nav-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === view));
-  const titles = {dashboard:"Painel", transactions:"Lançamentos", market:"Modo Mercado", mimos:"Mimos & lazer", calendar:"Calendário", notes:"Notas", goals:"Metas", calculators:"Calculadoras", reports:"Relatórios", profile:"Meu perfil"};
+  const titles = {
+    dashboard:"Painel", transactions:"Lançamentos", market:"Modo Mercado", 
+    mimos:"Mimos & lazer", calendar:"Calendário", notes:"Notas & Post-it", 
+    goals:"Metas", calculators:"Calculadoras", reports:"Relatórios", profile:"Meu perfil"
+  };
   $("#view-title").textContent = titles[view] || "Painel";
   history.replaceState(null, "", `#${view}`);
-  if (view === "dashboard") renderDashboard();
+  if (view === "dashboard") { renderDashboard(); renderGraficos(); }
   pandora("welcome");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -287,20 +266,19 @@ async function loadAllData() {
     cache = { transactions, reminders, notes, goals, market_items: market, mimos };
     renderAll();
   } catch (error) {
-    toast(`Não foi possível carregar os dados: ${error.message}`, "error");
-    pandora("error");
+    toast(`Erro ao carregar dados: ${error.message}`, "error");
   }
 }
 
 async function insertRow(table, row) {
-  if (!db || !currentUser) throw new Error("Entre na sua conta para salvar.");
+  if (!db || !currentUser) throw new Error("Faça login para salvar.");
   const { data, error } = await db.from(table).insert({ ...row, user_id: currentUser.id }).select().single();
   if (error) throw error;
   return data;
 }
 
 async function deleteRow(table, id) {
-  if (!db || !currentUser) throw new Error("Sessão não encontrada.");
+  if (!db || !currentUser) throw new Error("Sessão expirada.");
   const { error } = await db.from(table).delete().eq("id", id);
   if (error) throw error;
 }
@@ -313,13 +291,12 @@ async function runAction(fn, successMessage, reaction = "welcome") {
     pandora(reaction);
   } catch (error) {
     toast(error.message || "A ação falhou.", "error");
-    pandora("error");
   }
 }
 
 function renderAll() {
   renderDashboard(); renderTransactions(); renderMarket(); renderMimos();
-  renderReminders(); renderNotes(); renderGoals();
+  renderReminders(); renderNotes(); renderGoals(); renderGraficos();
 }
 
 function renderDashboard() {
@@ -334,8 +311,8 @@ function renderDashboard() {
   const recent = $("#recent-transactions");
   const rows = [...cache.transactions].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).slice(0,6);
   recent.replaceChildren();
-  if (!rows.length) { recent.innerHTML = '<p class="empty-state">Nenhum lançamento ainda. Comece registrando uma entrada ou saída.</p>'; return; }
-  rows.forEach(item => recent.append(makeListItem(item.description, `${item.date || ""} · ${item.category || "Sem categoria"}`, `${item.type === "income" ? "+" : "−"} ${money(item.amount)}`, item.type === "income" ? "positive" : "negative")));
+  if (!rows.length) { recent.innerHTML = '<p class="empty-state">Nenhum lançamento ainda.</p>'; return; }
+  rows.forEach(item => recent.append(makeListItem(item.description, `${item.date || ""} · ${item.category || "Geral"}`, `${item.type === "income" ? "+" : "−"} ${money(item.amount)}`, item.type === "income" ? "positive" : "negative")));
 }
 
 function makeListItem(title, subtitle, trailing, valueClass = "") {
@@ -351,16 +328,16 @@ function renderTransactions() {
   const tbody = $("#transactions-table"); tbody.replaceChildren();
   const month = $("#transaction-filter").value;
   const list = cache.transactions.filter(t => !month || (t.date||"").startsWith(month));
-  if (!list.length) { tbody.innerHTML = '<tr><td colspan="6">Nenhum lançamento encontrado.</td></tr>'; return; }
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="6">Nenhum lançamento.</td></tr>'; return; }
   list.forEach(t => {
     const tr = document.createElement("tr");
-    [t.date, t.type === "income" ? "Entrada" : "Saída", t.description, t.category || "—", money(t.amount)].forEach((value, i) => {
-      const td = document.createElement("td"); td.textContent = safeText(value);
+    [t.date, t.type === "income" ? "Entrada" : "Saída", t.description, t.category || "—", money(t.amount)].forEach((val, i) => {
+      const td = document.createElement("td"); td.textContent = safeText(val);
       if (i === 4) td.className = t.type === "income" ? "positive" : "negative";
       tr.append(td);
     });
     const action = document.createElement("td"); const btn = document.createElement("button");
-    btn.className="ghost row-action"; btn.textContent="Excluir"; btn.dataset.deleteTable="transactions"; btn.dataset.deleteId=t.id; btn.setAttribute("aria-label",`Excluir ${t.description}`);
+    btn.className="ghost row-action"; btn.textContent="Excluir"; btn.dataset.deleteTable="transactions"; btn.dataset.deleteId=t.id;
     action.append(btn); tr.append(action); tbody.append(tr);
   });
 }
@@ -369,9 +346,9 @@ function renderMarket() {
   const root = $("#market-list"); root.replaceChildren();
   const total = cache.market_items.reduce((sum,x)=>sum+Number(x.quantity)*Number(x.unit_price),0);
   $("#market-total").textContent = money(total);
-  if (!cache.market_items.length) { root.innerHTML='<p class="empty-state">Sua lista está vazia.</p>'; return; }
+  if (!cache.market_items.length) { root.innerHTML='<p class="empty-state">Lista vazia.</p>'; return; }
   cache.market_items.forEach(item => {
-    const row = makeListItem(item.name, `${item.quantity} × ${money(item.unit_price)} · ${item.category||"Sem categoria"}`, money(Number(item.quantity)*Number(item.unit_price)));
+    const row = makeListItem(item.name, `${item.quantity} × ${money(item.unit_price)} · ${item.category||"Geral"}`, money(Number(item.quantity)*Number(item.unit_price)));
     const btn=document.createElement("button"); btn.className="ghost row-action"; btn.textContent="Excluir"; btn.dataset.deleteTable="market_items"; btn.dataset.deleteId=item.id; row.append(btn); root.append(row);
   });
 }
@@ -379,26 +356,46 @@ function renderMarket() {
 function renderMimos() {
   const root=$("#mimos-list"); root.replaceChildren();
   const total=cache.mimos.reduce((sum,x)=>sum+Number(x.amount),0); $("#mimos-total").textContent=money(total);
-  if(!cache.mimos.length){root.innerHTML='<p class="empty-state">Nenhum mimo registrado.</p>';return;}
-  cache.mimos.forEach(item=>{const row=makeListItem(item.description,`${item.date} · ${item.category}`,money(item.amount),"negative"); const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="mimos";b.dataset.deleteId=item.id;row.append(b);root.append(row);});
+  if(!cache.mimos.length){root.innerHTML='<p class="empty-state">Nenhum mimo.</p>';return;}
+  cache.mimos.forEach(item=>{
+    const row=makeListItem(item.description,`${item.date} · ${item.category}`,money(item.amount),"negative");
+    const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="mimos";b.dataset.deleteId=item.id;row.append(b);root.append(row);
+  });
 }
 
 function renderReminders() {
   const root=$("#reminders-list"); root.replaceChildren();
-  if(!cache.reminders.length){root.innerHTML='<p class="empty-state">Sem lembretes por enquanto.</p>';return;}
-  [...cache.reminders].sort((a,b)=>(a.date||"").localeCompare(b.date||"")).forEach(item=>{const row=makeListItem(item.title,`${item.date}${item.end_date && item.end_date!==item.date ? " até "+item.end_date:""} · ${item.details||item.kind}`,item.kind==="event"?"Evento":"Lembrete");const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="reminders";b.dataset.deleteId=item.id;row.append(b);root.append(row);});
+  if(!cache.reminders.length){root.innerHTML='<p class="empty-state">Sem lembretes.</p>';return;}
+  [...cache.reminders].sort((a,b)=>(a.date||"").localeCompare(b.date||"")).forEach(item=>{
+    const row=makeListItem(item.title,`${item.date}${item.end_date && item.end_date!==item.date ? " até "+item.end_date:""} · ${item.details||item.kind}`,item.kind==="event"?"Evento":"Lembrete");
+    const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="reminders";b.dataset.deleteId=item.id;row.append(b);root.append(row);
+  });
 }
 
 function renderNotes() {
   const root=$("#notes-list");root.replaceChildren();
-  if(!cache.notes.length){root.innerHTML='<p class="empty-state">Nenhuma nota salva.</p>';return;}
-  cache.notes.forEach(item=>{const card=document.createElement("article");card.className="note-card";const h=document.createElement("h3");h.textContent=item.title;const p=document.createElement("p");p.textContent=item.body;const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir nota";b.dataset.deleteTable="notes";b.dataset.deleteId=item.id;card.append(h,p,b);root.append(card);});
+  if(!cache.notes.length){root.innerHTML='<p class="empty-state">Nenhuma nota.</p>';return;}
+  cache.notes.forEach(item=>{
+    const card=document.createElement("article");card.className="note-card";
+    const h=document.createElement("h3");h.textContent=item.title;
+    const p=document.createElement("p");p.textContent=item.body;
+    const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="notes";b.dataset.deleteId=item.id;
+    card.append(h,p,b);root.append(card);
+  });
 }
 
 function renderGoals() {
   const root=$("#goals-list");root.replaceChildren();
-  if(!cache.goals.length){root.innerHTML='<p class="empty-state">Crie uma meta para acompanhar seu progresso.</p>';return;}
-  cache.goals.forEach(goal=>{const card=document.createElement("article");card.className="note-card";const target=Number(goal.target),current=Number(goal.current),pct=target>0?Math.min(100,Math.round(current/target*100)):0;const h=document.createElement("h3");h.textContent=goal.title;const p=document.createElement("p");p.textContent=`${money(current)} de ${money(target)} · ${pct}%`;const bar=document.createElement("div");bar.className="progress";const span=document.createElement("span");span.style.width=`${pct}%`;bar.append(span);const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir meta";b.dataset.deleteTable="goals";b.dataset.deleteId=goal.id;card.append(h,p,bar,b);root.append(card);});
+  if(!cache.goals.length){root.innerHTML='<p class="empty-state">Nenhuma meta.</p>';return;}
+  cache.goals.forEach(goal=>{
+    const card=document.createElement("article");card.className="note-card";
+    const target=Number(goal.target),current=Number(goal.current),pct=target>0?Math.min(100,Math.round(current/target*100)):0;
+    const h=document.createElement("h3");h.textContent=goal.title;
+    const p=document.createElement("p");p.textContent=`${money(current)} de ${money(target)} · ${pct}%`;
+    const bar=document.createElement("div");bar.className="progress";const span=document.createElement("span");span.style.width=`${pct}%`;bar.append(span);
+    const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="goals";b.dataset.deleteId=goal.id;
+    card.append(h,p,bar,b);root.append(card);
+  });
 }
 
 function formObject(form) { return Object.fromEntries(new FormData(form).entries()); }
@@ -412,96 +409,229 @@ function setTodayDefaults() {
 function handleForms() {
   $("#transaction-form").addEventListener("submit", e => {
     e.preventDefault(); const f=e.currentTarget, d=formObject(f);
-    const amount=Number(d.amount); if(!Number.isFinite(amount)||amount<=0){toast("Informe um valor maior que zero.","error");return;}
-    runAction(()=>insertRow("transactions",{type:d.type,description:d.description.trim(),category:d.category.trim(),amount,date:d.date,note:d.note.trim()}),"Lançamento salvo.",d.type==="income"?"income":"expense").then(()=>f.reset());
+    const amount=Number(d.amount); if(!Number.isFinite(amount)||amount<=0){toast("Valor inválido.","error");return;}
+    runAction(()=>insertRow("transactions",{type:d.type,description:d.description.trim(),category:d.category,amount,date:d.date,note:d.note.trim()}),"Lançamento salvo.",d.type==="income"?"income":"expense").then(()=>f.reset());
   });
+
   $("#market-form").addEventListener("submit", e => {
     e.preventDefault();const f=e.currentTarget,d=formObject(f);
-    if(Number(d.quantity)<=0||Number(d.unit_price)<0){toast("Confira quantidade e preço.","error");return;}
     runAction(()=>insertRow("market_items",{name:d.name.trim(),quantity:Number(d.quantity),unit_price:Number(d.unit_price),category:d.category.trim(),date:isoToday()}),"Produto adicionado.","market").then(()=>{f.reset();f.elements.quantity.value=1;});
   });
+
   $("#market-checkout").addEventListener("click", async () => {
     const total=cache.market_items.reduce((sum,x)=>sum+Number(x.quantity)*Number(x.unit_price),0);
-    if(total<=0){toast("Adicione produtos antes de registrar a compra.","error");return;}
-    if(!confirm(`Registrar ${money(total)} como despesa e limpar a lista de mercado?`))return;
-    await runAction(async()=>{await insertRow("transactions",{type:"expense",description:"Compra de mercado",category:"Mercado",amount:Math.round(total*100)/100,date:isoToday(),note:"Total calculado pela lista de mercado."});for(const item of cache.market_items)await deleteRow("market_items",item.id);},"Compra registrada.","expense");
+    if(total<=0){toast("Carrinho vazio.","error");return;}
+    if(!confirm(`Registrar ${money(total)} como despesa de mercado?`))return;
+    await runAction(async()=>{
+      await insertRow("transactions",{type:"expense",description:"Compra de mercado",category:"Alimentação / Mercado",amount:Math.round(total*100)/100,date:isoToday(),note:"Checkout automático do mercado."});
+      for(const item of cache.market_items) await deleteRow("market_items",item.id);
+    },"Compra registrada e limpa do carrinho.","expense");
   });
-  $("#mimo-form").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget,d=formObject(f);if(Number(d.amount)<=0){toast("Informe um valor maior que zero.","error");return;}runAction(async()=>{await insertRow("mimos",{description:d.description.trim(),category:d.category,amount:Number(d.amount),date:d.date});await insertRow("transactions",{type:"expense",description:`Mimo: ${d.description.trim()}`,category:`Mimos · ${d.category}`,amount:Number(d.amount),date:d.date,note:"Gerado pelo módulo Mimos & lazer."});},"Mimo registrado e lançado como despesa.","mimo").then(()=>f.reset());});
-  $("#reminder-form").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget,d=formObject(f);if(d.end_date && d.end_date<d.date){toast("A data final precisa ser igual ou posterior à inicial.","error");return;}runAction(()=>insertRow("reminders",{kind:d.kind,title:d.title.trim(),date:d.date,end_date:d.end_date||d.date,details:d.details.trim()}),"Item adicionado ao calendário.","reminder").then(()=>f.reset());});
-  $("#note-form").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget,d=formObject(f);runAction(()=>insertRow("notes",{title:d.title.trim(),body:d.body.trim()}),"Nota salva.","note").then(()=>f.reset());});
-  $("#goal-form").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget,d=formObject(f);if(Number(d.target)<=0||Number(d.current)<0){toast("Confira os valores da meta.","error");return;}runAction(()=>insertRow("goals",{title:d.title.trim(),target:Number(d.target),current:Number(d.current)}),"Meta criada.","goal").then(()=>f.reset());});
-  $("#profile-form").addEventListener("submit",async e=>{e.preventDefault();const d=formObject(e.currentTarget);if(!db||!currentUser)return;try{const {error}=await db.from("profiles").upsert({id:currentUser.id,display_name:d.display_name.trim(),birthday:d.birthday||null});if(error)throw error;await loadProfile();showApp(currentUser);toast("Perfil atualizado.");pandora("welcome");}catch(err){toast(err.message,"error");pandora("error");}});
-  $("#calc-financing").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),p=Number(d.principal),r=Number(d.rate)/100,n=Number(d.months);const payment=r===0?p/n:p*r/(1-Math.pow(1+r,-n));$("#financing-result").textContent=`Parcela aproximada: ${money(payment)} · Total: ${money(payment*n)}. Não inclui tarifas, seguros ou impostos.`;pandora("welcome","Simulação concluída.");});
-  $("#calc-vacation").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),salary=Number(d.salary),days=Number(d.days);const gross=salary/30*days,third=gross/3;$("#vacation-result").textContent=`Estimativa bruta simplificada: ${money(gross+third)} (férias ${money(gross)} + 1/3 ${money(third)}).`;pandora("welcome","Cálculo estimado concluído.");});
-  $("#calc-bmi").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),bmi=Number(d.weight)/(Number(d.height)**2);$("#bmi-result").textContent=`IMC estimado: ${bmi.toFixed(1)}.`;pandora("welcome","Resultado informativo.");});
+
+  $("#mimo-form").addEventListener("submit",e=>{
+    e.preventDefault();const f=e.currentTarget,d=formObject(f);
+    const amount=Number(d.amount);
+    runAction(async()=>{
+      await insertRow("mimos",{description:d.description.trim(),category:d.category,amount,date:d.date});
+      await insertRow("transactions",{type:"expense",description:`Mimo: ${d.description.trim()}`,category:"Lazer / Mimos",amount,date:d.date,note:"Mimo & Lazer"});
+    },"Mimo registrado!","mimo").then(()=>f.reset());
+  });
+
+  $("#reminder-form").addEventListener("submit",e=>{
+    e.preventDefault();const f=e.currentTarget,d=formObject(f);
+    runAction(()=>insertRow("reminders",{kind:d.kind,title:d.title.trim(),date:d.date,end_date:d.end_date||d.date,details:d.details.trim()}),"Lembrete salvo.","reminder").then(()=>f.reset());
+  });
+
+  $("#note-form").addEventListener("submit",e=>{
+    e.preventDefault();const f=e.currentTarget,d=formObject(f);
+    runAction(()=>insertRow("notes",{title:d.title.trim(),body:d.body.trim()}),"Nota salva.","note").then(()=>f.reset());
+  });
+
+  $("#goal-form").addEventListener("submit",e=>{
+    e.preventDefault();const f=e.currentTarget,d=formObject(f);
+    runAction(()=>insertRow("goals",{title:d.title.trim(),target:Number(d.target),current:Number(d.current)}),"Meta criada.","goal").then(()=>f.reset());
+  });
+
+  $("#profile-form").addEventListener("submit",async e=>{
+    e.preventDefault();const d=formObject(e.currentTarget);
+    if(!db||!currentUser)return;
+    try{
+      const {error}=await db.from("profiles").upsert({id:currentUser.id,display_name:d.display_name.trim(),birthday:d.birthday||null});
+      if(error)throw error;
+      await loadProfile(); showApp(currentUser); toast("Perfil atualizado.");
+    }catch(err){toast(err.message,"error");}
+  });
+
+  // Calculadoras avançadas restauradas
+  $("#calc-financing").addEventListener("submit",e=>{
+    e.preventDefault();const d=formObject(e.currentTarget),p=Number(d.principal),r=Number(d.rate)/100,n=Number(d.months);
+    const payment=r===0?p/n:p*r/(1-Math.pow(1+r,-n));
+    $("#financing-result").textContent=`Parcela aproximada: ${money(payment)} · Total: ${money(payment*n)}`;
+  });
+
+  $("#calc-vacation").addEventListener("submit",e=>{
+    e.preventDefault();const d=formObject(e.currentTarget),salary=Number(d.salary),days=Number(d.days);
+    const gross=salary/30*days,third=gross/3;
+    $("#vacation-result").textContent=`Férias brutas: ${money(gross+third)} (Férias ${money(gross)} + 1/3 ${money(third)})`;
+  });
+
+  $("#calc-rescisao").addEventListener("submit",e=>{
+    e.preventDefault();const d=formObject(e.currentTarget),sal=Number(d.salary);
+    const admissao = new Date(d.admissao), desligamento = new Date(d.desligamento);
+    const meses = Math.max(1, (desligamento.getFullYear() - admissao.getFullYear()) * 12 + (desligamento.getMonth() - admissao.getMonth()));
+    const saldo = (sal/30)*desligamento.getDate();
+    const decimo = (sal/12)*(desligamento.getMonth()+1);
+    $("#rescisao-result").textContent=`Estimativa Rescisão: Saldo Salário ${money(saldo)} + 13º Prop. ${money(decimo)} (Total aprox: ${money(saldo+decimo)})`;
+  });
+
+  $("#calc-mei").addEventListener("submit",e=>{
+    e.preventDefault();const d=formObject(e.currentTarget),fat=Number(d.faturamento),limite=6750*Number(d.meses);
+    $("#mei-result").textContent=fat>limite ? `Ultrapassou o limite proporcional de ${money(limite)}!` : `Dentro do limite MEI proporcional (${money(limite)}).`;
+  });
 }
 
-function csvEscape(value) { const s=String(value??""); return `"${s.replaceAll('"','""')}"`; }
-function downloadBlob(name, blob) { const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000); }
+// Gráficos Analytics com Chart.js restaurados
+const slicePercentagePlugin = {
+  id: 'slicePercentage',
+  afterDraw(chart) {
+    const { ctx } = chart;
+    if (chart.config.type !== 'doughnut') return;
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      const total = dataset.data.reduce((acc, curr) => acc + curr, 0);
+      meta.data.forEach((element, index) => {
+        const value = dataset.data[index];
+        if (!value || total === 0) return;
+        const pct = ((value / total) * 100).toFixed(0) + '%';
+        if (((value / total) * 100) < 4) return;
+        const { x, y } = element.tooltipPosition();
+        ctx.save(); ctx.fillStyle = '#fff'; ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(pct, x, y);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+function renderGraficos() {
+  if (typeof Chart === "undefined") return;
+  if (!Chart.registry.plugins.get('slicePercentage')) Chart.register(slicePercentagePlugin);
+
+  const incCanvas = $("#chart-income"), expCanvas = $("#chart-expense"), overCanvas = $("#chart-overall"), mimCanvas = $("#chart-mimos");
+  if (!incCanvas || !expCanvas || !overCanvas) return;
+
+  const catsInc = {}, catsExp = {}, catsMim = {};
+  let totInc = 0, totExp = 0;
+
+  cache.transactions.forEach(t => {
+    const amt = Number(t.amount);
+    if (t.type === 'income') { catsInc[t.category] = (catsInc[t.category]||0) + amt; totInc += amt; }
+    else { catsExp[t.category] = (catsExp[t.category]||0) + amt; totExp += amt; }
+  });
+  cache.mimos.forEach(m => { catsMim[m.category] = (catsMim[m.category]||0) + Number(m.amount); });
+
+  if (chartIncomeObj) chartIncomeObj.destroy();
+  if (chartExpenseObj) chartExpenseObj.destroy();
+  if (chartOverallObj) chartOverallObj.destroy();
+  if (chartMimosObj) chartMimosObj.destroy();
+
+  const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+
+  chartIncomeObj = new Chart(incCanvas, {
+    type: 'doughnut',
+    data: { labels: Object.keys(catsInc).length ? Object.keys(catsInc) : ['Sem dados'], datasets: [{ data: Object.values(catsInc).length ? Object.values(catsInc) : [1], backgroundColor: ['#10b981','#00d2ff','#34d399'] }] },
+    options: opts
+  });
+
+  chartExpenseObj = new Chart(expCanvas, {
+    type: 'doughnut',
+    data: { labels: Object.keys(catsExp).length ? Object.keys(catsExp) : ['Sem dados'], datasets: [{ data: Object.values(catsExp).length ? Object.values(catsExp) : [1], backgroundColor: ['#a855f7','#f43f5e','#d946ef'] }] },
+    options: opts
+  });
+
+  chartOverallObj = new Chart(overCanvas, {
+    type: 'bar',
+    data: { labels: ['Entradas', 'Saídas'], datasets: [{ data: [totInc, totExp], backgroundColor: ['#00f0ff', '#ff007f'] }] },
+    options: { ...opts, scales: { x: { ticks: { color: '#a7abc2' } }, y: { ticks: { color: '#a7abc2' } } } }
+  });
+
+  if (mimCanvas) {
+    chartMimosObj = new Chart(mimCanvas, {
+      type: 'doughnut',
+      data: { labels: Object.keys(catsMim).length ? Object.keys(catsMim) : ['Sem dados'], datasets: [{ data: Object.values(catsMim).length ? Object.values(catsMim) : [1], backgroundColor: ['#fb7185','#fbbf24','#c084fc'] }] },
+      options: opts
+    });
+  }
+}
 
 function exportCSV() {
-  const month=$("#report-month").value;
-  const rows=cache.transactions.filter(t=>!month||(t.date||"").startsWith(month));
-  const csv=[["Data","Tipo","Descrição","Categoria","Valor","Observação"],...rows.map(t=>[t.date,t.type,t.description,t.category,t.amount,t.note])].map(row=>row.map(csvEscape).join(";")).join("\r\n");
-  downloadBlob(`sera-que-devo-lancamentos-${month||"geral"}.csv`,new Blob(["\ufeff",csv],{type:"text/csv;charset=utf-8"}));
-  pandora("export");
+  const month = $("#report-month").value;
+  const rows = cache.transactions.filter(t => !month || (t.date||"").startsWith(month));
+  const csv = [["Data","Tipo","Descrição","Categoria","Valor","Observação"], ...rows.map(t=>[t.date,t.type,t.description,t.category,t.amount,t.note])].map(r=>r.join(";")).join("\r\n");
+  const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `lancamentos-${month||'geral'}.csv`; a.click(); a.remove();
+  toast("CSV exportado.");
 }
 
-function exportBackup() {
-  const backup={exportedAt:new Date().toISOString(),profile:{display_name:profile?.display_name,birthday:profile?.birthday},data:cache};
-  downloadBlob(`sera-que-devo-backup-${isoToday()}.json`,new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}));
-  pandora("export");
+function exportPDF() {
+  if (!window.jspdf) { toast("Biblioteca PDF indisponível.", "error"); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16); doc.text("Relatório Financeiro - Será Que Devo?", 14, 20);
+  const body = cache.transactions.map(t => [t.date, t.type, t.category, t.description, money(t.amount)]);
+  doc.autoTable({ startY: 28, head: [['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor']], body });
+  doc.save("relatorio-financeiro.pdf");
+  toast("PDF gerado com sucesso.");
 }
 
 function setupEvents() {
-  $("#auth-form").addEventListener("submit",authSubmit);
-  $$("[data-auth-mode]").forEach(btn=>btn.addEventListener("click",()=>setAuthMode(btn.dataset.authMode)));
-  $("#main-nav").addEventListener("click",e=>{const btn=e.target.closest("[data-view]");if(btn)navigate(btn.dataset.view);});
-  $$("[data-go]").forEach(btn=>btn.addEventListener("click",()=>navigate(btn.dataset.go)));
-  $("#theme-toggle").addEventListener("click",()=>setTheme(document.documentElement.dataset.theme==="light"?"dark":"light"));
-  $("#mobile-theme-toggle").addEventListener("click",()=>setTheme(document.documentElement.dataset.theme==="light"?"dark":"light"));
-  $("#logout-btn").addEventListener("click",signOut);
-  $("#pandora-refresh").addEventListener("click",()=>pandora("welcome"));
-  $("#transaction-filter").addEventListener("change",renderTransactions);
-  $("#export-csv").addEventListener("click",exportCSV);
-  $("#export-backup").addEventListener("click",exportBackup);
-  $("#delete-account-info").addEventListener("click",()=>toast("Solicite a exclusão por um canal seguro do administrador."));
-  document.addEventListener("click",e=>{
-    const b=e.target.closest("[data-delete-table][data-delete-id]");
-    if(!b)return;
-    const table=b.dataset.deleteTable,id=b.dataset.deleteId;
-    if(!Object.values(TABLES).includes(table))return;
-    if(!confirm("Deseja excluir este item? Esta ação não pode ser desfeita."))return;
-    runAction(()=>deleteRow(table,id),"Item excluído.","delete");
+  $("#auth-form").addEventListener("submit", authSubmit);
+  $$("[data-auth-mode]").forEach(btn => btn.addEventListener("click", () => setAuthMode(btn.dataset.authMode)));
+  $("#main-nav").addEventListener("click", e => { const btn = e.target.closest("[data-view]"); if (btn) navigate(btn.dataset.view); });
+  $$("[data-go]").forEach(btn => btn.addEventListener("click", () => navigate(btn.dataset.go)));
+  $("#theme-toggle").addEventListener("click", () => setTheme(document.documentElement.dataset.theme==="light"?"dark":"light"));
+  $("#mobile-theme-toggle").addEventListener("click", () => setTheme(document.documentElement.dataset.theme==="light"?"dark":"light"));
+  $("#logout-btn").addEventListener("click", signOut);
+  $("#pandora-refresh").addEventListener("click", () => pandora("welcome"));
+  $("#transaction-filter").addEventListener("change", renderTransactions);
+  $("#export-csv").addEventListener("click", exportCSV);
+  $("#export-pdf").addEventListener("click", exportPDF);
+  $("#export-backup").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(cache, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `backup-${isoToday()}.json`; a.click(); a.remove();
   });
-  window.addEventListener("online",()=>$("#online-status").textContent="Conectado");
-  window.addEventListener("offline",()=>{$("#online-status").textContent="Offline";toast("Sem conexão. Dados locais em cache.");});
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-delete-table][data-delete-id]");
+    if (!b) return;
+    if (!confirm("Excluir este item?")) return;
+    runAction(() => deleteRow(b.dataset.deleteTable, b.dataset.deleteId), "Item excluído.", "delete");
+  });
 }
 
 async function init() {
   initTheme(); setupEvents(); handleForms(); setTodayDefaults(); setAuthMode("login");
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
-    navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("SW não registrado:",err));
+    navigator.serviceWorker.register("./service-worker.js").catch(err => console.warn("SW erro:", err));
   }
   if (!db) {
-    $("#online-status").textContent="Configuração pendente";
-    showAuthMessage("Configure o Supabase em app.js.");
-    pandora("welcome");
+    $("#online-status").textContent = "Configuração pendente";
     return;
   }
-  $("#online-status").textContent=navigator.onLine?"Conectado":"Offline";
-  const {data:{session},error}=await db.auth.getSession();
-  if(error){showAuthMessage(error.message,true);return;}
-  if(session?.user){
-    currentUser=session.user;
-    try{await loadProfile();showApp(currentUser);await loadAllData();navigate(location.hash.replace("#","")||"dashboard");pandora("login");}
-    catch(err){toast(err.message,"error");}
+  const { data: { session } } = await db.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    await loadProfile();
+    showApp(currentUser);
+    await loadAllData();
+    navigate(location.hash.replace("#","") || "dashboard");
   }
-  db.auth.onAuthStateChange(async(event,session)=>{
-    if(event==="SIGNED_OUT"){showLoggedOut();return;}
-    if(session?.user && !currentUser){
-      currentUser=session.user;
-      try{await loadProfile();showApp(currentUser);await loadAllData();}catch(err){toast(err.message,"error");}
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_OUT") { showLoggedOut(); return; }
+    if (session?.user && !currentUser) {
+      currentUser = session.user;
+      await loadProfile(); showApp(currentUser); await loadAllData();
     }
   });
 }

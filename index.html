@@ -10,10 +10,14 @@
   <link rel="icon" href="./icon-192.png">
   <link rel="stylesheet" href="./style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Pular para o conteúdo</a>
 
+  <!-- TELA DE AUTENTICAÇÃO / LOGIN -->
   <section id="auth-screen" class="auth-wrap">
     <div class="auth-card panel">
       <img class="brand-logo" src="./logo.png" alt="Será Que Devo?" onerror="this.hidden=true">
@@ -43,6 +47,7 @@
     </aside>
   </section>
 
+  <!-- ESTRUTURA PRINCIPAL DO APLICATIVO (SPA) -->
   <div id="app-shell" class="app-shell" hidden>
     <aside class="sidebar">
       <div class="brand-lockup">
@@ -55,17 +60,17 @@
         <button class="nav-btn" data-view="transactions">↕ <span>Lançamentos</span></button>
         <button class="nav-btn" data-view="market">🛒 <span>Mercado</span></button>
         <button class="nav-btn" data-view="mimos">♡ <span>Mimos & lazer</span></button>
-        <button class="nav-btn" data-view="calendar">▦ <span>Calendário</span></button>
-        <button class="nav-btn" data-view="notes">▤ <span>Notas</span></button>
+        <button class="nav-btn" data-view="calendar">📅 <span>Calendário</span></button>
+        <button class="nav-btn" data-view="notes">▤ <span>Notas & Post-it</span></button>
         <button class="nav-btn" data-view="goals">◎ <span>Metas</span></button>
-        <button class="nav-btn" data-view="calculators">⌗ <span>Calculadoras</span></button>
-        <button class="nav-btn" data-view="reports">⇩ <span>Relatórios</span></button>
+        <button class="nav-btn" data-view="calculators">⌗ <span>Calculadoras & CLT</span></button>
+        <button class="nav-btn" data-view="reports">⇩ <span>Relatórios & PDF</span></button>
         <button class="nav-btn" data-view="profile">⚙ <span>Meu perfil</span></button>
       </nav>
       <div class="sidebar-bottom">
         <button id="theme-toggle" class="ghost full" type="button">☼ Alternar tema</button>
         <button id="logout-btn" class="ghost full" type="button">Sair da conta</button>
-        <small class="muted">PWA • Dados por perfil</small>
+        <small class="muted">PWA • Sincronizado</small>
       </div>
     </aside>
 
@@ -75,6 +80,7 @@
         <div class="top-actions"><span id="online-status" class="status-pill">Conectando…</span><button id="mobile-theme-toggle" class="icon-btn" aria-label="Alternar tema">◐</button></div>
       </header>
 
+      <!-- 1. PAINEL / DASHBOARD -->
       <section class="view active" id="view-dashboard">
         <div class="welcome-row"><div><h2 id="welcome-title">Olá!</h2><p class="muted">Seu resumo pessoal, sem julgamento… ou quase.</p></div><button class="primary" data-go="transactions">＋ Novo lançamento</button></div>
         <div class="stats-grid">
@@ -87,14 +93,51 @@
           <article class="panel"><div class="panel-heading"><div><p class="eyebrow">MOVIMENTAÇÕES</p><h3>Últimos lançamentos</h3></div><button class="text-btn" data-go="transactions">Ver todos →</button></div><div id="recent-transactions" class="list-stack"><p class="empty-state">Seus lançamentos aparecerão aqui.</p></div></article>
           <article class="panel pandora-panel"><div class="panel-heading"><div><p class="eyebrow">A SUA ASSISTENTE</p><h3>Pandora comenta</h3></div><span class="live-dot">● AO VIVO</span></div><div class="pandora-content"><img id="pandora-mascot" src="./Pandora-satisfeita.png" alt="Pandora" onerror="this.hidden=true"><p id="mood-message" aria-live="polite">Me mostra seus números que eu dou meu parecer.</p></div><button id="pandora-refresh" class="ghost" type="button">Quero outro comentário</button></article>
         </div>
+
+        <!-- GRÁFICOS ANALYTICS RESTAURADOS -->
+        <section class="panel cyber-panel" style="margin-top: 20px;">
+          <div class="panel-heading"><h3>Distribuição e Média por Categoria</h3><span style="font-size: 0.65rem; color: var(--muted);">ANALYTICS // v2.0</span></div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px;">
+            <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center;">
+              <h4 style="font-size: 0.75rem; color: var(--good); margin-bottom: 8px;">Entradas (% Categoria)</h4>
+              <div style="position: relative; height: 160px;"><canvas id="chart-income"></canvas></div>
+            </div>
+            <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center;">
+              <h4 style="font-size: 0.75rem; color: var(--pink); margin-bottom: 8px;">Saídas (% Categoria)</h4>
+              <div style="position: relative; height: 160px;"><canvas id="chart-expense"></canvas></div>
+            </div>
+            <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center;">
+              <h4 style="font-size: 0.75rem; color: #a855f7; margin-bottom: 8px;">Gastos com Mimos</h4>
+              <div style="position: relative; height: 160px;"><canvas id="chart-mimos"></canvas></div>
+            </div>
+            <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center;">
+              <h4 style="font-size: 0.75rem; color: var(--accent); margin-bottom: 8px;">Visão Geral (Volume)</h4>
+              <div style="position: relative; height: 160px;"><canvas id="chart-overall"></canvas></div>
+            </div>
+          </div>
+        </section>
       </section>
 
+      <!-- 2. LANÇAMENTOS -->
       <section class="view" id="view-transactions">
         <div class="section-intro"><div><h2>Lançamentos</h2><p>Registre entradas e saídas da sua vida financeira.</p></div></div>
         <form id="transaction-form" class="panel form-grid">
           <label>Tipo<select name="type" required><option value="expense">Saída / despesa</option><option value="income">Entrada / receita</option></select></label>
           <label>Descrição<input name="description" maxlength="120" required placeholder="Ex.: mercado, salário"></label>
-          <label>Categoria<input name="category" maxlength="60" placeholder="Ex.: alimentação"></label>
+          <label>Categoria
+            <select name="category" required>
+              <option value="Academia">Academia</option>
+              <option value="Alimentação / Mercado">Alimentação / Mercado</option>
+              <option value="Aluguel/Moradia">Aluguel/Moradia</option>
+              <option value="Lazer / Mimos">Lazer / Mimos</option>
+              <option value="Pagamento / Salário">Pagamento / Salário</option>
+              <option value="Parcelas/Emprestimos">Parcelas/Empréstimos</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Contas Mensais (água, luz, internet)">Contas Mensais (água, luz, internet)</option>
+              <option value="Contas Anuais (IPTU, IPVA)">Contas Anuais (IPTU, IPVA)</option>
+              <option value="Dinheiro extra">Dinheiro extra</option>
+            </select>
+          </label>
           <label>Valor (R$)<input name="amount" type="number" min="0.01" step="0.01" required></label>
           <label>Data<input name="date" type="date" required></label>
           <label class="span-all">Observação (opcional)<input name="note" maxlength="300" placeholder="Detalhes"></label>
@@ -103,10 +146,14 @@
         <article class="panel"><div class="panel-heading"><h3>Histórico</h3><input id="transaction-filter" class="compact-input" type="month" aria-label="Filtrar lançamentos por mês"></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Ação</th></tr></thead><tbody id="transactions-table"><tr><td colspan="6">Carregando…</td></tr></tbody></table></div></article>
       </section>
 
+      <!-- 3. MODO MERCADO -->
       <section class="view" id="view-market">
-        <div class="section-intro"><div><h2>Modo Mercado</h2><p>Monte sua lista e acompanhe o total estimado.</p></div></div>
+        <div class="section-intro"><div><h2>Modo Mercado</h2><p>Monte sua lista com sugestões automáticas e acompanhe o total estimado.</p></div></div>
         <form id="market-form" class="panel form-grid">
-          <label>Produto<input name="name" required maxlength="100" placeholder="Nome do produto"></label>
+          <label>Produto e Medida<input name="name" required maxlength="100" list="medidas-sugeridas" placeholder="Ex: Arroz 5kg"></label>
+          <datalist id="medidas-sugeridas">
+            <option value="Arroz 1kg"></option><option value="Arroz 5kg"></option><option value="Feijão 1kg"></option><option value="Açúcar 1kg"></option><option value="Café 500g"></option><option value="Óleo de Soja 900ml"></option><option value="Leite 1L"></option><option value="Detergente 500ml"></option><option value="Sabão em Pó 1.6kg"></option><option value="Papel Higiênico 12 rolos"></option>
+          </datalist>
           <label>Quantidade<input name="quantity" type="number" min="0.01" step="0.01" value="1" required></label>
           <label>Preço unitário (R$)<input name="unit_price" type="number" min="0" step="0.01" required></label>
           <label>Categoria<input name="category" maxlength="50" placeholder="Hortifruti, limpeza…"></label>
@@ -115,11 +162,12 @@
         <article class="panel"><div class="panel-heading"><h3>Lista de compras</h3><strong id="market-total">R$ 0,00</strong></div><div id="market-list" class="list-stack"></div></article>
       </section>
 
+      <!-- 4. MIMOS & LAZER -->
       <section class="view" id="view-mimos">
         <div class="section-intro"><div><h2>Mimos & lazer</h2><p>Curta a vida sem perder de vista o orçamento.</p></div></div>
         <form id="mimo-form" class="panel form-grid">
-          <label>Descrição<input name="description" maxlength="100" required placeholder="Ex.: cinema, lanche"></label>
-          <label>Categoria<select name="category"><option>Lazer</option><option>Beleza</option><option>Comida</option><option>Compras</option><option>Outros</option></select></label>
+          <label>Descrição<input name="description" maxlength="100" required placeholder="Ex.: cinema, açaí"></label>
+          <label>Categoria<select name="category"><option value="doces-laricas">Doces & Laricas</option><option value="roupas-blusinhas">Roupas & Blusinhas</option><option value="mimo-mimimei">Mimos / Me Mimei</option><option value="beleza">Beleza & Autocuidado</option><option value="delivery">Delivery / Comidinha</option><option value="joguinhos">Joguinhos / Games</option><option value="role">Rolê / Saídas</option><option value="outros">Outros</option></select></label>
           <label>Valor (R$)<input name="amount" type="number" min="0.01" step="0.01" required></label>
           <label>Data<input name="date" type="date" required></label>
           <div class="span-all form-actions"><button class="primary" type="submit">Registrar mimo</button></div>
@@ -127,11 +175,12 @@
         <article class="panel"><div class="panel-heading"><h3>Meus mimos</h3><strong id="mimos-total">R$ 0,00</strong></div><div id="mimos-list" class="list-stack"></div></article>
       </section>
 
+      <!-- 5. CALENDÁRIO -->
       <section class="view" id="view-calendar">
-        <div class="section-intro"><div><h2>Calendário financeiro</h2><p>Organize lembretes e compromissos pessoais.</p></div></div>
+        <div class="section-intro"><div><h2>Calendário financeiro</h2><p>Organize lembretes, eventos e períodos (férias/viagens).</p></div></div>
         <form id="reminder-form" class="panel form-grid">
-          <label>Tipo<select name="kind"><option value="reminder">Lembrete</option><option value="event">Evento / período</option></select></label>
-          <label>Título<input name="title" maxlength="120" required></label>
+          <label>Tipo<select name="kind"><option value="reminder">Lembrete</option><option value="event">Evento / Período</option></select></label>
+          <label>Título<input name="title" maxlength="120" required placeholder="Ex: Pagar Aluguel / Férias"></label>
           <label>Data inicial<input name="date" type="date" required></label>
           <label>Data final (para evento)<input name="end_date" type="date"></label>
           <label class="span-all">Detalhes<input name="details" maxlength="300" placeholder="Opcional"></label>
@@ -140,8 +189,9 @@
         <article class="panel"><h3>Próximos lembretes</h3><div id="reminders-list" class="list-stack"></div></article>
       </section>
 
+      <!-- 6. NOTAS & POST-IT -->
       <section class="view" id="view-notes">
-        <div class="section-intro"><div><h2>Notas & Post-it</h2><p>Ideias, lembretes e informações que você não quer esquecer.</p></div></div>
+        <div class="section-intro"><div><h2>Notas & Post-it</h2><p>Ideias, lembretes e informações rápidas.</p></div></div>
         <form id="note-form" class="panel form-grid">
           <label>Título<input name="title" maxlength="100" required></label>
           <label class="span-all">Nota<textarea name="body" rows="4" maxlength="2000" required></textarea></label>
@@ -150,6 +200,7 @@
         <div id="notes-list" class="notes-grid"></div>
       </section>
 
+      <!-- 7. METAS -->
       <section class="view" id="view-goals">
         <div class="section-intro"><div><h2>Metas financeiras</h2><p>Transforme planos em objetivos acompanháveis.</p></div></div>
         <form id="goal-form" class="panel form-grid">
@@ -161,36 +212,64 @@
         <div id="goals-list" class="notes-grid"></div>
       </section>
 
+      <!-- 8. CALCULADORAS & CLT -->
       <section class="view" id="view-calculators">
-        <div class="section-intro"><div><h2>Calculadoras</h2><p>Simulações educativas. Os resultados não substituem orientação profissional.</p></div></div>
+        <div class="section-intro"><div><h2>Calculadoras & Guias CLT / MEI</h2><p>Simulações profissionais integradas. Não substituem consultoria contábil.</p></div></div>
         <div class="calc-grid">
           <form id="calc-financing" class="panel form-grid">
-            <h3 class="span-all">Financiamento — parcela fixa estimada</h3>
+            <h3 class="span-all">Financiamento — Tabela Price / SAC</h3>
             <label>Valor financiado (R$)<input name="principal" type="number" min="0.01" step="0.01" required></label>
             <label>Juros mensais (%)<input name="rate" type="number" min="0" step="0.01" required></label>
             <label>Quantidade de meses<input name="months" type="number" min="1" max="600" required></label>
             <div class="span-all form-actions"><button class="primary" type="submit">Calcular parcela</button></div><output id="financing-result" class="result span-all"></output>
           </form>
+
           <form id="calc-vacation" class="panel form-grid">
-            <h3 class="span-all">Férias CLT — estimativa bruta simplificada</h3>
+            <h3 class="span-all">Calculadora de Férias CLT</h3>
             <label>Salário bruto (R$)<input name="salary" type="number" min="0" step="0.01" required></label>
             <label>Dias de férias<input name="days" type="number" min="1" max="30" value="30" required></label>
             <div class="span-all form-actions"><button class="primary" type="submit">Estimar férias + 1/3</button></div><output id="vacation-result" class="result span-all"></output>
           </form>
-          <form id="calc-bmi" class="panel form-grid">
-            <h3 class="span-all">IMC</h3>
-            <label>Peso (kg)<input name="weight" type="number" min="1" step="0.1" required></label>
-            <label>Altura (m)<input name="height" type="number" min="0.5" max="2.7" step="0.01" required></label>
-            <div class="span-all form-actions"><button class="primary" type="submit">Calcular IMC</button></div><output id="bmi-result" class="result span-all"></output>
+
+          <form id="calc-rescisao" class="panel form-grid span-all">
+            <h3 class="span-all">Rescisão Trabalhista CLT (Avançada)</h3>
+            <label>Último Salário (R$)<input name="salary" type="number" min="0" step="0.01" required></label>
+            <label>Tipo de Desligamento
+              <select name="type">
+                <option value="sem_justa">Sem justa causa</option>
+                <option value="pedido">Pedido de demissão</option>
+                <option value="acordo">Acordo mútuo (Art. 484-A)</option>
+              </select>
+            </label>
+            <label>Data de Admissão<input name="admissao" type="date" required></label>
+            <label>Data de Desligamento<input name="desligamento" type="date" required></label>
+            <div class="span-all form-actions"><button class="primary" type="submit">Calcular Rescisão</button></div><output id="rescisao-result" class="result span-all"></output>
+          </form>
+
+          <form id="calc-mei" class="panel form-grid span-all">
+            <h3 class="span-all">Validação de Limite MEI</h3>
+            <label>Faturamento Bruto no Ano (R$)<input name="faturamento" type="number" min="0" step="0.01" required></label>
+            <label>Meses ativo no ano<input name="meses" type="number" min="1" max="12" value="12" required></label>
+            <div class="span-all form-actions"><button class="primary" type="submit">Verificar MEI</button></div><output id="mei-result" class="result span-all"></output>
           </form>
         </div>
       </section>
 
+      <!-- 9. RELATÓRIOS & EXPORTAÇÃO PDF -->
       <section class="view" id="view-reports">
-        <div class="section-intro"><div><h2>Relatórios & exportação</h2><p>Exporte uma cópia dos seus lançamentos para CSV.</p></div></div>
-        <article class="panel"><label>Filtrar por mês<input id="report-month" type="month"></label><div class="form-actions"><button id="export-csv" class="primary" type="button">Exportar lançamentos CSV</button><button id="export-backup" class="ghost" type="button">Exportar backup JSON</button></div><p class="fine-print">O arquivo exportado contém dados pessoais. Guarde-o em local seguro.</p></article>
+        <div class="section-intro"><div><h2>Relatórios & exportação</h2><p>Exporte seus dados em CSV ou gere relatórios completos em PDF.</p></div></div>
+        <article class="panel">
+          <label>Filtrar por mês<input id="report-month" type="month"></label>
+          <div class="form-actions">
+            <button id="export-csv" class="primary" type="button">Exportar CSV</button>
+            <button id="export-pdf" class="ghost" type="button" style="color: var(--pink); border-color: var(--pink);">Baixar Relatório PDF</button>
+            <button id="export-backup" class="ghost" type="button">Backup JSON</button>
+          </div>
+          <p class="fine-print">Os arquivos exportados contêm dados pessoais. Guarde-os em local seguro.</p>
+        </article>
       </section>
 
+      <!-- 10. PERFIL -->
       <section class="view" id="view-profile">
         <div class="section-intro"><div><h2>Meu perfil</h2><p>Dados da sua conta e preferências pessoais.</p></div></div>
         <form id="profile-form" class="panel form-grid">
@@ -198,11 +277,21 @@
           <label>Data de nascimento (opcional)<input name="birthday" type="date"></label>
           <div class="span-all form-actions"><button class="primary" type="submit">Salvar perfil</button></div>
         </form>
-        <article class="panel"><h3>Privacidade</h3><p>Seus dados são vinculados ao seu usuário autenticado no Supabase sob políticas estritas de segurança (RLS).</p><button id="delete-account-info" class="danger-outline" type="button">Como excluir meus dados</button></article>
+        <article class="panel"><h3>Privacidade & Segurança</h3><p>Seus dados são protegidos por RLS no Supabase. Nunca compartilhe sua senha.</p><button id="delete-account-info" class="danger-outline" type="button">Como excluir meus dados</button></article>
       </section>
 
       <footer class="app-footer">Será Que Devo? Pro Lite · Estimativas informativas</footer>
     </main>
+  </div>
+
+  <!-- MODAL DE ANIVERSÁRIO DA PANDORA -->
+  <div id="birthday-modal" class="birthday-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="background: var(--panel); border: 2px solid var(--accent); padding: 30px; border-radius: 16px; text-align: center; max-width: 400px; width: 90%;">
+      <img src="./Pandora-aniversario1.png" alt="Aniversário" style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 12px;">
+      <h2 style="color: var(--accent); margin-bottom: 10px;">FELIZ ANIVERSÁRIO!</h2>
+      <p id="birthday-message" class="muted" style="margin-bottom: 20px;">Hoje é seu dia especial!</p>
+      <button onclick="document.getElementById('birthday-modal').style.display='none'" class="primary">Obrigado, Pandora! ✨</button>
+    </div>
   </div>
 
   <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>

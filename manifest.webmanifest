@@ -1,17 +1,15 @@
 {
-  "id": "./",
-  "name": "Será Que Devo? — Pro Lite",
+  "name": "Será Que Devo? Pro",
   "short_name": "Será Que Devo?",
-  "description": "Organização financeira pessoal com a Pandora.",
+  "description": "Organizador financeiro pessoal com a Pandora",
   "lang": "pt-BR",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0b0c12",
-  "theme_color": "#11101a",
+  "background_color": "#f6f7fb",
+  "theme_color": "#6546e8",
   "icons": [
-    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    {"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ]
 }

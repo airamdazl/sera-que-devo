@@ -1,15 +1,13 @@
 /*
  * Será Que Devo? Pro Lite
  * Supabase Auth + tabelas com RLS + navegação SPA.
- * Configure SUPABASE_URL e SUPABASE_ANON_KEY antes de executar.
  */
 const SUPABASE_URL = "https://prrnpotfbaoiruduymky.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_KlKmR2NFxpmZx84yyf0ZhA_nEcOesUi";
 const supabaseReady = window.supabase?.createClient &&
   SUPABASE_URL.startsWith("https://prrnpotfbaoiruduymky.supabase.co") &&
-  !SUPABASE_URL.includes("https://prrnpotfbaoiruduymky.supabase.co") &&
-  SUPABASE_ANON_KEY.length > 20 &&
-  !SUPABASE_ANON_KEY.includes("sb_publishable_KlKmR2NFxpmZx84yyf0ZhA_nEcOesUi");
+  !SUPABASE_URL.includes("placeholder") &&
+  SUPABASE_ANON_KEY.length > 20;
 
 const db = supabaseReady
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -21,7 +19,15 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const money = value => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value) || 0);
 const isoToday = () => new Date().toLocaleDateString("en-CA");
-const safeText = value => String(value ?? "");
+
+// SEGURANÇA: Prevenção básica contra XSS criando text nodes seguros via textContent
+const safeText = value => {
+  const str = String(value ?? "");
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.textContent;
+};
+
 let currentUser = null;
 let profile = null;
 let activeView = "dashboard";
@@ -38,12 +44,12 @@ const TABLES = {
 };
 
 const PANDORA_IMAGES = {
-  satisfied: "./img/Pandora-satisfeita.png",
-  alert: "./img/Pandora-alerta.png",
-  ironic: "./img/Pandora-irônica.png",
-  rich: "./img/Pandora-rica.png",
-  desperate: "./img/Pandora-desesperada.png",
-  birthday: "./img/Pandora-aniversario1.png"
+  satisfied: "./Pandora-satisfeita.png",
+  alert: "./Pandora-alerta.png",
+  ironic: "./Pandora-irônica.png",
+  rich: "./Pandora-rica.png",
+  desperate: "./Pandora-desesperada.png",
+  birthday: "./Pandora-aniversario1.png"
 };
 
 const PANDORA_LINES = {
@@ -110,6 +116,7 @@ function toast(message, type = "info") {
   $("#toast-region")?.append(el);
   window.setTimeout(() => el.remove(), 4200);
 }
+
 function pandora(category = "welcome", detail = "") {
   const choices = PANDORA_LINES[category] || PANDORA_LINES.welcome;
   const selected = choices[Math.floor(Math.random() * choices.length)];
@@ -124,6 +131,7 @@ function pandora(category = "welcome", detail = "") {
   const authMsg = $("#auth-pandora-message");
   if (authMsg && !currentUser) authMsg.textContent = selected[1];
 }
+
 function setTheme(theme, announce = true) {
   const next = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
@@ -132,16 +140,19 @@ function setTheme(theme, announce = true) {
   if (meta) meta.content = next === "light" ? "#f3f5fb" : "#11101a";
   if (announce) pandora("theme");
 }
+
 function initTheme() {
   let saved = null;
   try { saved = localStorage.getItem("sqd-theme"); } catch {}
   const preferred = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   setTheme(preferred, false);
 }
+
 function showAuthMessage(message, isError = false) {
   const el = $("#auth-message");
   if (el) { el.textContent = message; el.style.color = isError ? "var(--danger)" : "var(--muted)"; }
 }
+
 function setAuthMode(mode) {
   authMode = mode === "signup" ? "signup" : "login";
   $$("[data-auth-mode]").forEach(btn => btn.classList.toggle("active", btn.dataset.authMode === authMode));
@@ -152,6 +163,7 @@ function setAuthMode(mode) {
   $("#auth-submit").textContent = authMode === "signup" ? "Criar conta segura" : "Entrar com segurança";
   showAuthMessage("");
 }
+
 function showApp(user) {
   currentUser = user;
   $("#auth-screen").hidden = true;
@@ -166,11 +178,13 @@ function showApp(user) {
     form.elements.birthday.value = profile?.birthday || "";
   }
 }
+
 function showLoggedOut() {
   currentUser = null; profile = null;
   $("#app-shell").hidden = true;
   $("#auth-screen").hidden = false;
 }
+
 async function loadProfile() {
   if (!db || !currentUser) return;
   const { data, error } = await db.from("profiles").select("id, display_name, birthday").eq("id", currentUser.id).maybeSingle();
@@ -183,11 +197,12 @@ async function loadProfile() {
     profile = result.data;
   }
 }
+
 async function authSubmit(event) {
   event.preventDefault();
   if (!db) {
-    showAuthMessage("Configure SUPABASE_URL e SUPABASE_ANON_KEY em js/app.js e execute supabase/schema.sql antes de entrar.", true);
-    toast("Supabase ainda não configurado.", "error");
+    showAuthMessage("Configure SUPABASE_URL e SUPABASE_ANON_KEY corretos em app.js.", true);
+    toast("Supabase não configurado.", "error");
     return;
   }
   const form = event.currentTarget;
@@ -199,7 +214,7 @@ async function authSubmit(event) {
   try {
     if (authMode === "signup") {
       if (!form.elements.displayName.value.trim()) throw new Error("Informe seu nome de exibição.");
-      if (!$("#terms-check").checked) throw new Error("É necessário aceitar os termos para criar a conta.");
+      if (!$("#terms-check").checked) throw new Error("É necessário aceitar os termos.");
       if (password.length < 8) throw new Error("Use uma senha com pelo menos 8 caracteres.");
       const { data, error } = await db.auth.signUp({
         email, password,
@@ -207,7 +222,7 @@ async function authSubmit(event) {
       });
       if (error) throw error;
       if (!data.session) {
-        showAuthMessage("Cadastro iniciado. Confirme seu e-mail pelo link enviado para concluir o acesso.");
+        showAuthMessage("Cadastro iniciado. Confirme seu e-mail pelo link enviado.");
         pandora("welcome");
         return;
       }
@@ -222,13 +237,14 @@ async function authSubmit(event) {
     await loadAllData();
     navigate("dashboard");
     pandora("login");
-    toast("Acesso realizado.");
+    toast("Acesso realizado com sucesso.");
   } catch (error) {
     showAuthMessage(error.message || "Não foi possível autenticar.", true);
   } finally {
     submit.disabled = false;
   }
 }
+
 async function signOut() {
   if (db) {
     const { error } = await db.auth.signOut();
@@ -239,6 +255,7 @@ async function signOut() {
   showAuthMessage("Você saiu da conta.");
   pandora("welcome");
 }
+
 function navigate(view) {
   if (!$(`#view-${view}`)) view = "dashboard";
   activeView = view;
@@ -251,12 +268,14 @@ function navigate(view) {
   pandora("welcome");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
 async function queryTable(table, orderColumn = "created_at") {
   if (!db || !currentUser) return [];
   const { data, error } = await db.from(table).select("*").order(orderColumn, { ascending: false });
   if (error) throw error;
   return data || [];
 }
+
 async function loadAllData() {
   if (!db || !currentUser) return;
   $("#online-status").textContent = navigator.onLine ? "Conectado" : "Offline";
@@ -272,17 +291,20 @@ async function loadAllData() {
     pandora("error");
   }
 }
+
 async function insertRow(table, row) {
   if (!db || !currentUser) throw new Error("Entre na sua conta para salvar.");
   const { data, error } = await db.from(table).insert({ ...row, user_id: currentUser.id }).select().single();
   if (error) throw error;
   return data;
 }
+
 async function deleteRow(table, id) {
   if (!db || !currentUser) throw new Error("Sessão não encontrada.");
   const { error } = await db.from(table).delete().eq("id", id);
   if (error) throw error;
 }
+
 async function runAction(fn, successMessage, reaction = "welcome") {
   try {
     await fn();
@@ -294,10 +316,12 @@ async function runAction(fn, successMessage, reaction = "welcome") {
     pandora("error");
   }
 }
+
 function renderAll() {
   renderDashboard(); renderTransactions(); renderMarket(); renderMimos();
   renderReminders(); renderNotes(); renderGoals();
 }
+
 function renderDashboard() {
   const month = isoToday().slice(0, 7);
   const list = cache.transactions.filter(t => (t.date || "").startsWith(month));
@@ -313,6 +337,7 @@ function renderDashboard() {
   if (!rows.length) { recent.innerHTML = '<p class="empty-state">Nenhum lançamento ainda. Comece registrando uma entrada ou saída.</p>'; return; }
   rows.forEach(item => recent.append(makeListItem(item.description, `${item.date || ""} · ${item.category || "Sem categoria"}`, `${item.type === "income" ? "+" : "−"} ${money(item.amount)}`, item.type === "income" ? "positive" : "negative")));
 }
+
 function makeListItem(title, subtitle, trailing, valueClass = "") {
   const item = document.createElement("div"); item.className = "list-item";
   const main = document.createElement("div"); main.className = "item-main";
@@ -321,6 +346,7 @@ function makeListItem(title, subtitle, trailing, valueClass = "") {
   const value = document.createElement("strong"); value.textContent = safeText(trailing); if(valueClass) value.className=valueClass;
   main.append(strong, small); item.append(main, value); return item;
 }
+
 function renderTransactions() {
   const tbody = $("#transactions-table"); tbody.replaceChildren();
   const month = $("#transaction-filter").value;
@@ -338,6 +364,7 @@ function renderTransactions() {
     action.append(btn); tr.append(action); tbody.append(tr);
   });
 }
+
 function renderMarket() {
   const root = $("#market-list"); root.replaceChildren();
   const total = cache.market_items.reduce((sum,x)=>sum+Number(x.quantity)*Number(x.unit_price),0);
@@ -348,33 +375,40 @@ function renderMarket() {
     const btn=document.createElement("button"); btn.className="ghost row-action"; btn.textContent="Excluir"; btn.dataset.deleteTable="market_items"; btn.dataset.deleteId=item.id; row.append(btn); root.append(row);
   });
 }
+
 function renderMimos() {
   const root=$("#mimos-list"); root.replaceChildren();
   const total=cache.mimos.reduce((sum,x)=>sum+Number(x.amount),0); $("#mimos-total").textContent=money(total);
   if(!cache.mimos.length){root.innerHTML='<p class="empty-state">Nenhum mimo registrado.</p>';return;}
   cache.mimos.forEach(item=>{const row=makeListItem(item.description,`${item.date} · ${item.category}`,money(item.amount),"negative"); const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="mimos";b.dataset.deleteId=item.id;row.append(b);root.append(row);});
 }
+
 function renderReminders() {
   const root=$("#reminders-list"); root.replaceChildren();
   if(!cache.reminders.length){root.innerHTML='<p class="empty-state">Sem lembretes por enquanto.</p>';return;}
   [...cache.reminders].sort((a,b)=>(a.date||"").localeCompare(b.date||"")).forEach(item=>{const row=makeListItem(item.title,`${item.date}${item.end_date && item.end_date!==item.date ? " até "+item.end_date:""} · ${item.details||item.kind}`,item.kind==="event"?"Evento":"Lembrete");const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir";b.dataset.deleteTable="reminders";b.dataset.deleteId=item.id;row.append(b);root.append(row);});
 }
+
 function renderNotes() {
   const root=$("#notes-list");root.replaceChildren();
   if(!cache.notes.length){root.innerHTML='<p class="empty-state">Nenhuma nota salva.</p>';return;}
   cache.notes.forEach(item=>{const card=document.createElement("article");card.className="note-card";const h=document.createElement("h3");h.textContent=item.title;const p=document.createElement("p");p.textContent=item.body;const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir nota";b.dataset.deleteTable="notes";b.dataset.deleteId=item.id;card.append(h,p,b);root.append(card);});
 }
+
 function renderGoals() {
   const root=$("#goals-list");root.replaceChildren();
   if(!cache.goals.length){root.innerHTML='<p class="empty-state">Crie uma meta para acompanhar seu progresso.</p>';return;}
   cache.goals.forEach(goal=>{const card=document.createElement("article");card.className="note-card";const target=Number(goal.target),current=Number(goal.current),pct=target>0?Math.min(100,Math.round(current/target*100)):0;const h=document.createElement("h3");h.textContent=goal.title;const p=document.createElement("p");p.textContent=`${money(current)} de ${money(target)} · ${pct}%`;const bar=document.createElement("div");bar.className="progress";const span=document.createElement("span");span.style.width=`${pct}%`;bar.append(span);const b=document.createElement("button");b.className="ghost row-action";b.textContent="Excluir meta";b.dataset.deleteTable="goals";b.dataset.deleteId=goal.id;card.append(h,p,bar,b);root.append(card);});
 }
+
 function formObject(form) { return Object.fromEntries(new FormData(form).entries()); }
+
 function setTodayDefaults() {
   $$('input[type="date"]').forEach(input => { if (!input.value && input.form?.id !== "profile-form") input.value = isoToday(); });
   $("#report-month").value = isoToday().slice(0,7);
   $("#transaction-filter").value = isoToday().slice(0,7);
 }
+
 function handleForms() {
   $("#transaction-form").addEventListener("submit", e => {
     e.preventDefault(); const f=e.currentTarget, d=formObject(f);
@@ -397,12 +431,14 @@ function handleForms() {
   $("#note-form").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget,d=formObject(f);runAction(()=>insertRow("notes",{title:d.title.trim(),body:d.body.trim()}),"Nota salva.","note").then(()=>f.reset());});
   $("#goal-form").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget,d=formObject(f);if(Number(d.target)<=0||Number(d.current)<0){toast("Confira os valores da meta.","error");return;}runAction(()=>insertRow("goals",{title:d.title.trim(),target:Number(d.target),current:Number(d.current)}),"Meta criada.","goal").then(()=>f.reset());});
   $("#profile-form").addEventListener("submit",async e=>{e.preventDefault();const d=formObject(e.currentTarget);if(!db||!currentUser)return;try{const {error}=await db.from("profiles").upsert({id:currentUser.id,display_name:d.display_name.trim(),birthday:d.birthday||null});if(error)throw error;await loadProfile();showApp(currentUser);toast("Perfil atualizado.");pandora("welcome");}catch(err){toast(err.message,"error");pandora("error");}});
-  $("#calc-financing").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),p=Number(d.principal),r=Number(d.rate)/100,n=Number(d.months);const payment=r===0?p/n:p*r/(1-Math.pow(1+r,-n));$("#financing-result").textContent=`Parcela aproximada: ${money(payment)} · Total: ${money(payment*n)}. Não inclui tarifas, seguros ou impostos.`;pandora("welcome","Simulação concluída. Compare o Custo Efetivo Total antes de contratar.");});
-  $("#calc-vacation").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),salary=Number(d.salary),days=Number(d.days);const gross=salary/30*days,third=gross/3;$("#vacation-result").textContent=`Estimativa bruta simplificada: ${money(gross+third)} (férias ${money(gross)} + 1/3 ${money(third)}), antes de descontos e regras específicas.`;pandora("welcome","Este cálculo é simplificado e precisa ser conferido com RH/contador.");});
-  $("#calc-bmi").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),bmi=Number(d.weight)/(Number(d.height)**2);$("#bmi-result").textContent=`IMC estimado: ${bmi.toFixed(1)}. O índice é apenas uma triagem e não substitui avaliação profissional.`;pandora("welcome","Resultado informativo, não é diagnóstico.");});
+  $("#calc-financing").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),p=Number(d.principal),r=Number(d.rate)/100,n=Number(d.months);const payment=r===0?p/n:p*r/(1-Math.pow(1+r,-n));$("#financing-result").textContent=`Parcela aproximada: ${money(payment)} · Total: ${money(payment*n)}. Não inclui tarifas, seguros ou impostos.`;pandora("welcome","Simulação concluída.");});
+  $("#calc-vacation").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),salary=Number(d.salary),days=Number(d.days);const gross=salary/30*days,third=gross/3;$("#vacation-result").textContent=`Estimativa bruta simplificada: ${money(gross+third)} (férias ${money(gross)} + 1/3 ${money(third)}).`;pandora("welcome","Cálculo estimado concluído.");});
+  $("#calc-bmi").addEventListener("submit",e=>{e.preventDefault();const d=formObject(e.currentTarget),bmi=Number(d.weight)/(Number(d.height)**2);$("#bmi-result").textContent=`IMC estimado: ${bmi.toFixed(1)}.`;pandora("welcome","Resultado informativo.");});
 }
+
 function csvEscape(value) { const s=String(value??""); return `"${s.replaceAll('"','""')}"`; }
 function downloadBlob(name, blob) { const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000); }
+
 function exportCSV() {
   const month=$("#report-month").value;
   const rows=cache.transactions.filter(t=>!month||(t.date||"").startsWith(month));
@@ -410,11 +446,13 @@ function exportCSV() {
   downloadBlob(`sera-que-devo-lancamentos-${month||"geral"}.csv`,new Blob(["\ufeff",csv],{type:"text/csv;charset=utf-8"}));
   pandora("export");
 }
+
 function exportBackup() {
   const backup={exportedAt:new Date().toISOString(),profile:{display_name:profile?.display_name,birthday:profile?.birthday},data:cache};
   downloadBlob(`sera-que-devo-backup-${isoToday()}.json`,new Blob([JSON.stringify(backup,null,2)],{type:"application/json"}));
   pandora("export");
 }
+
 function setupEvents() {
   $("#auth-form").addEventListener("submit",authSubmit);
   $$("[data-auth-mode]").forEach(btn=>btn.addEventListener("click",()=>setAuthMode(btn.dataset.authMode)));
@@ -427,7 +465,7 @@ function setupEvents() {
   $("#transaction-filter").addEventListener("change",renderTransactions);
   $("#export-csv").addEventListener("click",exportCSV);
   $("#export-backup").addEventListener("click",exportBackup);
-  $("#delete-account-info").addEventListener("click",()=>toast("Solicite a exclusão por um canal seguro do administrador. Nunca coloque service_role no frontend."));
+  $("#delete-account-info").addEventListener("click",()=>toast("Solicite a exclusão por um canal seguro do administrador."));
   document.addEventListener("click",e=>{
     const b=e.target.closest("[data-delete-table][data-delete-id]");
     if(!b)return;
@@ -436,21 +474,18 @@ function setupEvents() {
     if(!confirm("Deseja excluir este item? Esta ação não pode ser desfeita."))return;
     runAction(()=>deleteRow(table,id),"Item excluído.","delete");
   });
-  document.addEventListener("click",e=>{
-    const a=e.target.closest('a[href="#privacy"]');
-    if(a){e.preventDefault();toast("Consulte a política de privacidade publicada junto ao projeto. Complete o texto legal antes de abrir o acesso público.");}
-  });
   window.addEventListener("online",()=>$("#online-status").textContent="Conectado");
-  window.addEventListener("offline",()=>{$("#online-status").textContent="Offline";toast("Sem conexão. Dados do Supabase podem não atualizar.");});
+  window.addEventListener("offline",()=>{$("#online-status").textContent="Offline";toast("Sem conexão. Dados locais em cache.");});
 }
+
 async function init() {
   initTheme(); setupEvents(); handleForms(); setTodayDefaults(); setAuthMode("login");
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
-    navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("Service Worker não registrado:",err));
+    navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("SW não registrado:",err));
   }
   if (!db) {
     $("#online-status").textContent="Configuração pendente";
-    showAuthMessage("Configure o Supabase para habilitar cadastro, login e sincronização segura.");
+    showAuthMessage("Configure o Supabase em app.js.");
     pandora("welcome");
     return;
   }
@@ -470,4 +505,5 @@ async function init() {
     }
   });
 }
+
 init();

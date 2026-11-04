@@ -1,7 +1,14 @@
-const CACHE_NAME = "sqd-pro-lite-v1";
+const CACHE_NAME = "sqd-pro-lite-v2";
 const APP_SHELL = [
-  "./", "./index.html", "./css/style.css", "./js/app.js",
-  "./manifest.webmanifest"
+  "./", 
+  "./index.html", 
+  "./style.css", 
+  "./app.js",
+  "./manifest.webmanifest",
+  "./logo.png",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./Pandora-satisfeita.png"
 ];
 
 self.addEventListener("install", event => {

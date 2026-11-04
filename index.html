@@ -7,8 +7,8 @@
   <meta name="description" content="Organização financeira pessoal com a Pandora.">
   <title>Será Que Devo? — Pro Lite</title>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icons/icon-192.png">
-  <link rel="stylesheet" href="./css/style.css">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -16,7 +16,7 @@
 
   <section id="auth-screen" class="auth-wrap">
     <div class="auth-card panel">
-      <img class="brand-logo" src="./img/logo.png" alt="Será Que Devo?" onerror="this.hidden=true">
+      <img class="brand-logo" src="./logo.png" alt="Será Que Devo?" onerror="this.hidden=true">
       <p class="eyebrow">PRO LITE</p>
       <h1>Seu dinheiro, suas escolhas.</h1>
       <p class="muted">Entre na sua conta ou crie seu perfil pessoal.</p>
@@ -38,7 +38,7 @@
       <div id="auth-message" class="notice" role="status" aria-live="polite"></div>
     </div>
     <aside class="auth-pandora">
-      <img src="./img/Pandora-satisfeita.png" alt="Pandora, assistente do Será Que Devo?" onerror="this.hidden=true">
+      <img src="./Pandora-satisfeita.png" alt="Pandora, assistente do Será Que Devo?" onerror="this.hidden=true">
       <p id="auth-pandora-message">Oi! Eu sou a Pandora. Vamos cuidar desse dinheiro sem perder o bom humor.</p>
     </aside>
   </section>
@@ -46,7 +46,7 @@
   <div id="app-shell" class="app-shell" hidden>
     <aside class="sidebar">
       <div class="brand-lockup">
-        <img src="./img/logo.png" alt="" onerror="this.hidden=true">
+        <img src="./logo.png" alt="" onerror="this.hidden=true">
         <div><strong>Será Que Devo?</strong><small>PRO LITE</small></div>
       </div>
       <div class="user-chip"><span class="avatar" id="user-avatar">?</span><span><strong id="user-name">Meu perfil</strong><small id="user-email"></small></span></div>
@@ -85,7 +85,7 @@
         </div>
         <div class="dashboard-grid">
           <article class="panel"><div class="panel-heading"><div><p class="eyebrow">MOVIMENTAÇÕES</p><h3>Últimos lançamentos</h3></div><button class="text-btn" data-go="transactions">Ver todos →</button></div><div id="recent-transactions" class="list-stack"><p class="empty-state">Seus lançamentos aparecerão aqui.</p></div></article>
-          <article class="panel pandora-panel"><div class="panel-heading"><div><p class="eyebrow">A SUA ASSISTENTE</p><h3>Pandora comenta</h3></div><span class="live-dot">● AO VIVO</span></div><div class="pandora-content"><img id="pandora-mascot" src="./img/Pandora-satisfeita.png" alt="Pandora" onerror="this.hidden=true"><p id="mood-message" aria-live="polite">Me mostra seus números que eu dou meu parecer.</p></div><button id="pandora-refresh" class="ghost" type="button">Quero outro comentário</button></article>
+          <article class="panel pandora-panel"><div class="panel-heading"><div><p class="eyebrow">A SUA ASSISTENTE</p><h3>Pandora comenta</h3></div><span class="live-dot">● AO VIVO</span></div><div class="pandora-content"><img id="pandora-mascot" src="./Pandora-satisfeita.png" alt="Pandora" onerror="this.hidden=true"><p id="mood-message" aria-live="polite">Me mostra seus números que eu dou meu parecer.</p></div><button id="pandora-refresh" class="ghost" type="button">Quero outro comentário</button></article>
         </div>
       </section>
 
@@ -184,7 +184,6 @@
             <div class="span-all form-actions"><button class="primary" type="submit">Calcular IMC</button></div><output id="bmi-result" class="result span-all"></output>
           </form>
         </div>
-        <p class="notice">As calculadoras de rescisão, IRPF e MEI do sistema original precisam ser comparadas e validadas com as regras vigentes antes de serem disponibilizadas nesta versão. Não use estimativas simplificadas como valor oficial.</p>
       </section>
 
       <section class="view" id="view-reports">
@@ -199,14 +198,14 @@
           <label>Data de nascimento (opcional)<input name="birthday" type="date"></label>
           <div class="span-all form-actions"><button class="primary" type="submit">Salvar perfil</button></div>
         </form>
-        <article class="panel"><h3>Privacidade</h3><p>Seus dados são vinculados ao seu usuário autenticado no Supabase. Outros usuários não devem conseguir consultá-los, devido às políticas RLS. Nunca compartilhe sua senha ou exportações financeiras.</p><button id="delete-account-info" class="danger-outline" type="button">Como excluir meus dados</button><p id="delete-account-message" class="fine-print">Para exclusão completa da conta de autenticação, configure uma Edge Function segura no Supabase. Nunca execute a exclusão administrativa a partir do navegador.</p></article>
+        <article class="panel"><h3>Privacidade</h3><p>Seus dados são vinculados ao seu usuário autenticado no Supabase sob políticas estritas de segurança (RLS).</p><button id="delete-account-info" class="danger-outline" type="button">Como excluir meus dados</button></article>
       </section>
 
-      <footer class="app-footer">Será Que Devo? Pro Lite · Estimativas informativas · <a href="#privacy" id="privacy-link">Privacidade</a></footer>
+      <footer class="app-footer">Será Que Devo? Pro Lite · Estimativas informativas</footer>
     </main>
   </div>
 
   <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
-  <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

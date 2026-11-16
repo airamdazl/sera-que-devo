@@ -1,8 +1,8 @@
-/* Será Que Devo? Pro — PWA shell v3, atualização segura. */
+/* Será Que Devo? BI 2.0 — PWA shell v4, atualização segura. */
 /* Não armazenar respostas do Supabase, dados financeiros ou tokens de autenticação. */
-const CACHE_NAME = 'sqd-pwa-public-shell-v3';
+const CACHE_NAME = 'sqd-pwa-public-shell-beta2-v1';
 const PUBLIC_SHELL = [
-  './index.html', './manifest.webmanifest', './icon-192.png',
+  './index.html', './bi20.js', './bi20.css', './bi20-polish.js', './bi20-polish.css', './public-config.js', './manifest.webmanifest', './icon-192.png',
   './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'
 ];
 
@@ -18,7 +18,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.filter(key =>
-        (key === 'sqd-shell-v1' || key.startsWith('sqd-pwa-public-shell-'))
+        (key === 'sqd-shell-v1' || (key.startsWith('sqd-pwa-public-shell-') || key.startsWith('sqd-pwa-public-shell-beta2-')))
         && key !== CACHE_NAME
       ).map(key => caches.delete(key))
     )).then(() => self.clients.claim())

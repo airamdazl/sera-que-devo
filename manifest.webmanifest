@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "Será Que Devo? Pro",
+  "name": "Será Que Devo? — Beta 2.0",
   "short_name": "Será Que Devo?",
-  "description": "Organizador financeiro pessoal com a Pandora, metas, calendário e calculadoras.",
+  "description": "Painel pessoal BI, finanças, sonhos e simuladores educativos",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f7fb",
-  "theme_color": "#6546e8",
+  "background_color": "#0B0F19",
+  "theme_color": "#171229",
   "categories": [
     "finance",
     "productivity"

@@ -99,7 +99,7 @@
 #view-dashboard .ux04-summary .stats > .stat,
 #view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi {min-width:0;min-height:137px;padding:17px;border:1px solid var(--line);border-radius:18px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--primary) 10%,var(--surface)));display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:9px;box-shadow:0 7px 19px var(--bi-glow)}
 #view-dashboard .ux04-summary .stats > .stat::before,
-#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi::before {content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--primary),var(--bi-neon),var(--bi-cyan));opacity:1}
+#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi::before {content:"";position:absolute;top:0;right:0;bottom:auto;left:0;width:100%!important;height:4px;background:linear-gradient(90deg,var(--primary),var(--bi-neon),var(--bi-cyan));opacity:1}
 #view-dashboard .ux04-summary .stats > .stat span,
 #view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi small {display:block;margin:0;font-size:.84rem;line-height:1.45;color:var(--muted);font-weight:650}
 #view-dashboard .ux04-summary .stats > .stat strong,
@@ -110,8 +110,3 @@
 #bi-card-purchase-form .ux07-interest-preview {grid-column:1/-1;padding:13px 15px;display:block;border:1px solid var(--line);border-radius:13px;background:var(--surface-2);color:var(--text);font-size:.86rem;line-height:1.5}
 @media(max-width:750px){#view-dashboard .ux04-summary .stats > .stat,#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi {min-height:129px;padding:13px;gap:8px}#view-dashboard .ux04-summary .stats > .stat strong,#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi strong {font-size:clamp(1.04rem,4.1vw,1.35rem)}}
 @media(max-width:370px){#view-dashboard .ux04-summary .stats {grid-template-columns:repeat(2,minmax(0,1fr))}}
-
-/* UX07 hotfix — garantir a faixa gradiente em TODOS os cards do resumo único. */
-#view-dashboard .ux04-summary .stats > article{position:relative;overflow:hidden}
-#view-dashboard .ux04-summary .stats > article::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;display:block;background:linear-gradient(90deg,var(--primary) 0%,var(--bi-neon) 50%,var(--bi-cyan) 100%)!important;opacity:1!important;z-index:1;pointer-events:none}
-#view-dashboard .ux04-summary .stats > article > *{position:relative;z-index:2}

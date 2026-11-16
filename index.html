@@ -88,7 +88,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="./bi20.css?v=2.0.6">
 <link rel="stylesheet" href="./bi20-polish.css?v=2.0.7"> <link rel="stylesheet" href="./bi20-ux02.css?v=2.0.6">
-<link rel="stylesheet" href="./bi20-ux04.css?v=2.0.7"></head>
+<link rel="stylesheet" href="./bi20-ux04.css?v=2.0.8-gradient-width"></head>
 <body>
 <a href="#main" class="skip">Ir ao conteúdo</a>
 <div id="toast" role="status" aria-live="polite" class="toast-stack"></div>
@@ -475,6 +475,14 @@ window.addEventListener('load', () => {
 #app .stat::before {
   content:"";position:absolute;inset:0 auto 0 0;width:4px;
   background:linear-gradient(180deg,var(--primary),var(--sqd-neon));
+}
+/* Ajuste pontual UX07: somente os cinco indicadores do Resumo Financeiro.
+   A regra antiga acima fixava a largura do pseudo-elemento em 4px. */
+#app #view-dashboard .ux04-summary .stats > .stat::before {
+  left:0;right:0;top:0;bottom:auto;
+  width:100%;height:4px;
+  background:linear-gradient(90deg,var(--primary),var(--bi-neon),var(--bi-cyan));
+  opacity:1;
 }
 #app .btn.primary {
   background:linear-gradient(115deg,var(--primary),var(--sqd-neon));

@@ -1,0 +1,64 @@
+/* Será Que Devo? — Beta 2.0 | UX revisão 02
+   Estilos somente de interface. Compatível com modos claro e escuro. */
+:root { --scd-card-tint: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+/* Navegação acessível e sempre disponível no lado esquerdo do cabeçalho. */
+#app .topbar{flex-wrap:wrap;align-items:center;gap:12px}
+#app #menu-toggle.scd-menu-left{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 45px;width:45px;height:45px;min-width:45px;min-height:45px;order:0;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;color:var(--text);font-size:1.35rem}
+#app #menu-toggle.scd-menu-left:hover{border-color:var(--primary);background:var(--primary-soft)}
+#app .topbar-title{flex:1 1 210px;order:1;min-width:0}
+#app .topright{order:2;flex:0 1 auto;margin-left:auto}
+#side-nav .scd-nav-glyph{font-size:1.18rem;width:24px;flex:none;text-align:center;line-height:1.35}
+@media(min-width:751px){
+ #app.scd-sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)!important}
+ #app.scd-sidebar-collapsed .sidebar{width:0!important;min-width:0!important;padding:0!important;border:0!important;opacity:0;visibility:hidden;overflow:hidden}
+}
+/* O conteúdo que já alimentava a Pandora passa a morar no cabeçalho. */
+#app .scd-pandora-header{order:3;flex:1 0 100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:13px 17px;margin-top:2px;border:1px solid color-mix(in srgb,var(--bi-cyan) 38%,var(--line));border-radius:16px;background:linear-gradient(110deg,color-mix(in srgb,var(--bi-neon) 12%,var(--surface)),color-mix(in srgb,var(--bi-cyan) 9%,var(--surface)));box-shadow:0 7px 24px var(--bi-glow)}
+#app .scd-pandora-heading{grid-column:1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--text);font-size:.88rem}
+#app .scd-pandora-heading>span:first-child{font-size:1.24rem;color:var(--bi-neon)}
+#app .scd-pandora-hint{font-size:.69rem;color:var(--muted);font-weight:500}
+#app .scd-pandora-header #pandora-insight{grid-column:1;margin:0;color:var(--text);font-size:.94rem;line-height:1.5;max-width:110ch}
+#app .scd-pandora-refresh{grid-column:2;grid-row:1/3;align-self:center;white-space:nowrap;padding:6px 12px;min-height:42px}
+/* Resumo financeiro: os dados de categorias têm destaque maior. */
+#view-dashboard .scd-analytics-grid{grid-template-columns:minmax(0,.67fr) minmax(0,1.33fr);align-items:stretch;gap:18px}
+#view-dashboard .scd-analytics-grid>.panel{min-width:0}
+#view-dashboard .scd-analytics-grid>.panel:nth-child(2){border-color:color-mix(in srgb,var(--bi-cyan) 32%,var(--line));box-shadow:0 10px 34px var(--bi-glow)}
+#view-dashboard .scd-analytics-grid .donut-layout{grid-template-columns:minmax(205px,255px) minmax(0,1fr);min-height:280px;gap:22px}
+#view-dashboard .scd-analytics-grid .donut{width:min(100%,255px);max-width:255px!important;min-width:0;margin:auto}
+#view-dashboard .scd-analytics-grid .donut strong{font-size:clamp(1rem,1.65vw,1.3rem)}
+#view-dashboard .scd-analytics-grid .breakdown-row{font-size:.82rem;white-space:normal}
+/* Gradiente sutil em cards, sem apagar os fundos físicos dos post-its. */
+#app .panel,#app .stat,#app .bi-panel,#app .goal-card,#app .bi-item,#app .scd-action{background:linear-gradient(145deg,var(--surface) 32%,var(--scd-card-tint) 100%);border-color:color-mix(in srgb,var(--primary) 17%,var(--line))}
+#app .bi-spotlight{background:linear-gradient(115deg,color-mix(in srgb,var(--bi-cyan) 10%,var(--surface)),color-mix(in srgb,var(--bi-neon) 12%,var(--surface)))}
+/* Post-it como papel: contraste constante nos dois temas e botões evidentes. */
+#notes-items.postits{grid-template-columns:repeat(auto-fill,minmax(min(100%,235px),1fr));gap:16px}
+#notes-items .postit{color:#243040!important;border:1px solid rgba(52,57,74,.28)!important;border-top:4px solid rgba(52,57,74,.22)!important;box-shadow:3px 7px 16px rgba(0,0,0,.19);padding:19px;display:flex;flex-direction:column;gap:10px;min-height:178px;transform:rotate(-.25deg)}
+#notes-items .postit[data-color="yellow"]{background:#fff0a6!important;color:#342e20!important}
+#notes-items .postit[data-color="pink"]{background:#ffd5e5!important;color:#49283b!important}
+#notes-items .postit[data-color="blue"]{background:#caedfc!important;color:#18384c!important}
+#notes-items .postit[data-color="green"]{background:#ccf2d6!important;color:#21432e!important}
+#notes-items .postit[data-color="purple"]{background:#e6d9ff!important;color:#3c2d55!important}
+#notes-items .postit h3{font-size:1.16rem;line-height:1.28;font-weight:850;margin:0;overflow-wrap:anywhere;color:inherit!important}
+#notes-items .postit p{font-size:1.02rem;line-height:1.55;min-height:58px;font-weight:550;margin:0 0 6px;white-space:pre-wrap;color:inherit!important;overflow-wrap:anywhere;flex:1}
+#notes-items .postit .postit-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;justify-content:flex-start}
+#notes-items .postit .postit-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:7px 10px;border-radius:10px;border:1px solid rgba(32,33,47,.34);color:#263347!important;background:rgba(255,255,255,.72)!important;font-size:.86rem;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+#notes-items .postit .postit-action span{font-size:1.15rem;line-height:1}
+#notes-items .postit .postit-action:hover{background:#fff!important;border-color:#343f59}
+#notes-items .postit .postit-delete{color:#8d2239!important}
+#notes-items .postit .postit-action:focus-visible{outline:3px solid #224ac2!important;outline-offset:2px}
+@media(max-width:1150px){#view-dashboard .scd-analytics-grid{grid-template-columns:1fr}}
+@media(max-width:750px){
+ #app #menu-toggle.scd-menu-left{order:0;flex:0 0 44px}
+ #app .topbar-title{flex:1 1 120px}
+ #app .topright{order:2}
+ #app .scd-pandora-header{order:3;flex-basis:100%;padding:12px 14px;grid-template-columns:minmax(0,1fr) auto}
+ #app .scd-pandora-hint{display:none}
+ #app .scd-pandora-refresh{padding:7px 9px}
+ #app .scd-pandora-refresh span{display:none}
+ #app .scd-pandora-header #pandora-insight{font-size:.91rem}
+ #view-dashboard .scd-analytics-grid .donut-layout{grid-template-columns:1fr;gap:16px;min-height:0}
+ #view-dashboard .scd-analytics-grid .donut{width:min(100%,250px);max-width:250px!important}
+ #app.scd-sidebar-collapsed .sidebar{width:min(290px,86vw)!important;opacity:1;visibility:visible;padding:23px 13px!important;border-right:1px solid var(--line)!important}
+ #app.scd-sidebar-collapsed .sidebar.open{transform:translateX(0)}
+}
+@media(prefers-reduced-motion:reduce){#notes-items .postit{transform:none}}

@@ -11,7 +11,7 @@ function goTx(){go('transactions');const d=$('#transaction-form');if(d){const wr
 function init(){
  if(!$('#view-dashboard')||$('#scd-quick-actions'))return;
  // Shortcuts stay available even after collapsing the long sidebar.
- const actions=[['＋','Novo lançamento','transactions',true],['⇆','Contas','bi-accounts'],['▣','Cartões','bi-cards'],['⌁','Dívidas','bi-debts'],['◉','Sonhos','goals'],['▦','Mercado','market']];
+ const actions=[['✍️','Novo lançamento','transactions',true],['🏦','Contas','bi-accounts'],['💳','Cartões','bi-cards'],['🧾','Dívidas','bi-debts'],['🎯','Sonhos','goals'],['🛒','Mercado','market']];
  const grid=make('div','scd-quick-actions');grid.id='scd-quick-actions';grid.setAttribute('aria-label','Atalhos do seu painel');
  for(const [icon,label,view,primary] of actions){const b=make('button','scd-action'+(primary?' primary':''));b.type='button';b.append(make('span','scd-glyph',icon),make('span','',label));b.addEventListener('click',()=>primary?goTx():go(view));grid.append(b)}
  const dashboard=$('#view-dashboard'),hero=dashboard.querySelector('.hero');hero?.after(grid);
@@ -30,6 +30,9 @@ function init(){
   const groups=[['Ferramentas e organização',['market','calendar','notes','goals','calculators','reports']],['Minhas finanças',['bi-accounts','bi-cards','bi-debts','bi-recurring']]];
   for(const [label,ids] of groups){const buttons=ids.map(id=>side.querySelector('button[data-view="'+id+'"]')).filter(Boolean);if(!buttons.length)continue;const box=make('details','scd-nav-group');const head=make('summary','',label+' ▾');box.append(head);for(const b of buttons)box.append(b);side.append(box)}
   const profile=side.querySelector('button[data-view="profile"]');if(profile)side.append(profile);
+  const icons={dashboard:'🏠',transactions:'💸',market:'🛒',mimos:'💝',calendar:'📅',notes:'📝',goals:'🎯',calculators:'🧮',reports:'📊',profile:'⚙️','bi-accounts':'🏦','bi-cards':'💳','bi-debts':'🧾','bi-recurring':'🔁','bi-help':'🛟'};
+  for(const btn of side.querySelectorAll('button[data-view]')){const glyph=btn.querySelector('span');if(glyph&&icons[btn.dataset.view]){glyph.textContent=icons[btn.dataset.view];glyph.setAttribute('aria-hidden','true');glyph.classList.add('scd-nav-glyph')}}
+
  }
  // Fixed primary action within thumb reach on small screens.
  const fab=make('button','scd-fab','+');fab.type='button';fab.setAttribute('aria-label','Novo lançamento');fab.addEventListener('click',goTx);document.body.append(fab);

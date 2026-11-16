@@ -34,3 +34,15 @@
 @media(max-width:1050px){.bi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.bi-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bi-kpi{padding:13px}.bi-kpi strong{font-size:1.1rem}.bi-form{grid-template-columns:1fr}.bi-panel{padding:15px}.bi-item{align-items:flex-start}.bi-item b{font-size:.92rem}.bi-spotlight{flex-direction:column;align-items:flex-start}}
 #calendar-grid .bi-holiday-official{outline:2px solid var(--good);outline-offset:-2px}#calendar-grid .bi-holiday-festive{outline:2px dashed var(--bi-neon);outline-offset:-3px}.bi-holiday-desc{padding:10px;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-weight:750}
+
+/* UX03 - Contas e Cartões: visão por instituição, faturas e conciliação */
+.bi-bank-card{background:linear-gradient(125deg,var(--surface-2),var(--surface));border-left:3px solid var(--bi-cyan)}
+.bi-bank-card .btn{margin-left:auto;min-height:40px}
+.bi-card-summary{border:1px solid var(--line);padding:12px;border-radius:17px;background:linear-gradient(145deg,var(--surface-2),var(--surface));margin:12px 0;box-shadow:var(--shadow)}
+.bi-card-summary>.bi-item{box-shadow:none;background:transparent;border:none;border-bottom:1px solid var(--line);border-radius:0}
+.bi-invoices{display:grid;gap:7px;padding:7px}.bi-invoice{padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.bi-invoice>summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-weight:700;align-items:center}
+.bi-invoice p{margin:10px 0 4px}.bi-invoice ul{margin:4px 0;line-height:1.7;overflow-wrap:anywhere}
+@media(max-width:700px){.bi-bank-card .btn{width:100%}.bi-invoice>summary{font-size:.9rem}}
+
+.bi-bank-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:11px;margin:13px 0 20px}.bi-bank-mini{padding:16px;background:linear-gradient(125deg,var(--primary-soft),var(--surface));border:1px solid var(--line);border-radius:16px;display:grid;gap:5px;min-width:0}.bi-bank-mini span{font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}.bi-bank-mini strong{font-size:1.22rem;font-variant-numeric:tabular-nums}.bi-upcoming-invoices{display:grid;gap:8px}.bi-mini-invoice{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(100deg,var(--surface-2),var(--surface))}.bi-mini-invoice span{font-weight:650}.bi-mini-invoice small{font-size:.75rem;color:var(--muted)}@media(max-width:600px){.bi-mini-invoice{flex-wrap:wrap}.bi-mini-invoice b{margin-left:auto}}

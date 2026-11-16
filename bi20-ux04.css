@@ -82,3 +82,13 @@
 #transaction-form .ux04-fast-installments{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #transaction-form .ux04-fast-installments span{font-size:.81rem;color:var(--muted);font-weight:800;margin-right:3px}
 #transaction-form .ux04-fast-installments button{padding:7px 12px;min-width:46px}
+
+/* UX05: estado real de sincronização; nunca mostrar zero sem informar o resultado da consulta. */
+#scd-load-status.scd-load-status{display:flex;align-items:center;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;margin:10px 16px 16px;padding:14px 17px;background:linear-gradient(115deg,color-mix(in srgb,var(--bi-cyan) 10%,var(--surface)),var(--surface));color:var(--text);border:1px solid color-mix(in srgb,var(--bi-cyan) 30%,var(--line));border-radius:16px;box-shadow:0 5px 18px var(--bi-glow)}
+#scd-load-status.scd-load-error{border-color:color-mix(in srgb,#f8ad62 55%,var(--line));background:linear-gradient(115deg,color-mix(in srgb,#f8ad62 12%,var(--surface)),var(--surface))}
+#scd-load-status[hidden]{display:none!important}
+#scd-load-status .scd-load-message{flex:1 1 310px;min-width:0}
+#scd-load-status strong{font-size:.94rem;display:block}
+#scd-load-status p{font-size:.85rem;line-height:1.5;margin:5px 0 0;color:var(--muted);overflow-wrap:anywhere}
+#scd-retry-data{white-space:normal;min-height:44px;flex:0 0 auto}
+@media(max-width:600px){#scd-load-status{margin:10px 10px 14px;padding:14px}#scd-retry-data{width:100%}}

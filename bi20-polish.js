@@ -1,5 +1,5 @@
-/* Será Que Devo? — Beta 2.0 | Apresentação, privacidade visual e resumos.
- * Não altera lançamentos ou estrutura do Supabase. Evita simular auditorias de segurança.
+/* Será Que Devo? — Beta 2.0.6 | Apresentação, privacidade visual e resumos.
+ * Não altera lançamentos ou estrutura do Supabase. Removido o atalho de “segurança da sessão” para reduzir ruído e confusão.
  */
 (()=>{'use strict';
 const $=s=>document.querySelector(s);
@@ -17,11 +17,7 @@ function init(){
  const dashboard=$('#view-dashboard'),hero=dashboard.querySelector('.hero');hero?.after(grid);
  const help=make('button','icon-btn','?');help.type='button';help.title='Ajuda e perguntas frequentes';help.setAttribute('aria-label','Ajuda e perguntas frequentes');help.addEventListener('click',()=>go('bi-help'));
  const eye=make('button','icon-btn','◉');eye.type='button';eye.title='Ocultar valores financeiros';eye.setAttribute('aria-label','Ocultar valores financeiros');eye.setAttribute('aria-pressed','false');eye.addEventListener('click',()=>{privateView=!privateView;$('#app').classList.toggle('scd-private',privateView);eye.textContent=privateView?'◌':'◉';eye.setAttribute('aria-pressed',String(privateView));eye.setAttribute('aria-label',privateView?'Mostrar valores financeiros':'Ocultar valores financeiros');});
- const shield=make('button','icon-btn','♢');shield.type='button';shield.title='Informações de segurança da sessão';shield.setAttribute('aria-label','Informações de segurança da sessão');
- const utility=make('div','scd-utility');utility.append(eye,shield,help);$('.topright')?.prepend(utility);
- // No invented 'verified' claim: only observable browser/runtime facts.
- const dialog=make('dialog','scd-dialog');dialog.id='scd-security-dialog';dialog.innerHTML='<h2>♢ Segurança da sua sessão</h2><p id="scd-security-info"></p><p class="scd-data-note">Esta informação não é antivírus nem auditoria completa do Supabase. Consulte o suporte em caso de suspeita.</p><div class="scd-actions"><button type="button" class="btn ghost" id="scd-security-close">Fechar</button><button type="button" class="btn primary" id="scd-security-settings">Minha conta</button></div>';
- document.body.append(dialog);shield.addEventListener('click',()=>{$('#scd-security-info').textContent=(location.protocol==='https:'?'Conexão HTTPS ativa.':'Ambiente local de demonstração.')+' A autenticação e as permissões são fornecidas pelo Supabase. Esta tela não consegue examinar vírus nem provar ausência de acessos indevidos.';dialog.showModal()});dialog.querySelector('#scd-security-close').addEventListener('click',()=>dialog.close());dialog.querySelector('#scd-security-settings').addEventListener('click',()=>{dialog.close();go('profile')});
+ const utility=make('div','scd-utility');utility.append(eye,help);$('.topright')?.prepend(utility);
  const storyButton=make('button','btn ghost','✦ Resumo visual do mês');storyButton.type='button';storyButton.id='scd-monthly-story';storyButton.addEventListener('click',openStory);grid.after(storyButton);
  const modal=make('dialog','scd-dialog');modal.id='scd-story-dialog';modal.innerHTML='<h2>✦ Sua jornada do mês</h2><div id="scd-story-content" class="scd-story-screen" aria-live="polite"></div><div class="scd-story-controls"><button type="button" class="btn ghost" id="scd-story-back">Anterior</button><button type="button" class="btn primary" id="scd-story-next">Próximo</button><button type="button" class="btn ghost" id="scd-story-exit">Fechar</button></div>';
  document.body.append(modal);modal.querySelector('#scd-story-exit').addEventListener('click',()=>modal.close());modal.querySelector('#scd-story-back').addEventListener('click',()=>{storyIndex=Math.max(0,storyIndex-1);renderStory()});modal.querySelector('#scd-story-next').addEventListener('click',()=>{storyIndex=Math.min(storyScreens.length-1,storyIndex+1);renderStory()});

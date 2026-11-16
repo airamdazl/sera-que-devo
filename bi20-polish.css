@@ -92,4 +92,55 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .scd-private #bi-accounts-summary,.scd-private #bi-debts-total,.scd-private #bi-insights-mini strong,
 .scd-private #bi-accounts-list b,.scd-private #bi-debts-list b,.scd-private #recent-items .amount,
 .scd-private #tx-table td:nth-child(4){filter:blur(9px);user-select:none}
-@media(max-width:700px){.scd-utility button:nth-child(2){display:none}.scd-utility .icon-btn{width:34px;height:36px;min-width:34px;font-size:1.15rem}.topright .icon-btn{width:36px;height:36px}}
+@media(max-width:700px){.scd-utility .icon-btn{width:34px;height:36px;min-width:34px;font-size:1.15rem}.topright .icon-btn{width:36px;height:36px}}
+
+
+/* UX06: modo claro com contraste reforçado e sem ruído de status técnico. */
+:root[data-theme="light"] .panel,
+:root[data-theme="light"] .stat,
+:root[data-theme="light"] .bi-panel,
+:root[data-theme="light"] .goal-card,
+:root[data-theme="light"] .profile-chip,
+:root[data-theme="light"] .view-intro,
+:root[data-theme="light"] .ux04-summary,
+:root[data-theme="light"] .ux04-summary .stat,
+:root[data-theme="light"] .ux04-stage > .panel,
+:root[data-theme="light"] .ux04-hero-controls,
+:root[data-theme="light"] .scd-pandora-header,
+:root[data-theme="light"] .scd-dialog,
+:root[data-theme="light"] #scd-load-status{color:var(--text)!important}
+:root[data-theme="light"] .panel h1,
+:root[data-theme="light"] .panel h2,
+:root[data-theme="light"] .panel h3,
+:root[data-theme="light"] .panel p,
+:root[data-theme="light"] .panel label,
+:root[data-theme="light"] .panel strong,
+:root[data-theme="light"] .panel small,
+:root[data-theme="light"] .stat h3,
+:root[data-theme="light"] .stat p,
+:root[data-theme="light"] .stat strong,
+:root[data-theme="light"] .bi-panel h2,
+:root[data-theme="light"] .bi-panel h3,
+:root[data-theme="light"] .bi-panel p,
+:root[data-theme="light"] .bi-panel strong,
+:root[data-theme="light"] .view-intro h2,
+:root[data-theme="light"] .view-intro p,
+:root[data-theme="light"] .profile-chip strong,
+:root[data-theme="light"] .profile-chip small,
+:root[data-theme="light"] .ux04-pandora .scd-pandora-heading strong,
+:root[data-theme="light"] .ux04-pandora #pandora-insight,
+:root[data-theme="light"] #tx-table,
+:root[data-theme="light"] #tx-table th,
+:root[data-theme="light"] #tx-table td,
+:root[data-theme="light"] .empty,
+:root[data-theme="light"] .empty strong{color:var(--text)!important}
+:root[data-theme="light"] .muted,
+:root[data-theme="light"] .fine,
+:root[data-theme="light"] .notice,
+:root[data-theme="light"] #scd-load-status p,
+:root[data-theme="light"] .ux04-summary-note,
+:root[data-theme="light"] .scd-data-note,
+:root[data-theme="light"] .profile-chip small{color:var(--muted)!important}
+:root[data-theme="light"] .pill.subtle{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+:root[data-theme="light"] #transaction-form #ux04-source option,
+:root[data-theme="light"] #transaction-form #ux04-source optgroup{color:#161b37;background:#fff}

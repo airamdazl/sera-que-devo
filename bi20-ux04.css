@@ -1,0 +1,84 @@
+/* Será Que Devo? Beta 2.0.4 | Controle futurista, acessível e responsivo */
+#app .scd-pandora-header.ux04-pandora{order:3;grid-template-columns:minmax(0,1fr) auto;position:relative;overflow:hidden;padding:13px 17px;background:linear-gradient(115deg,color-mix(in srgb,var(--bi-neon) 15%,var(--surface)),color-mix(in srgb,var(--bi-cyan) 10%,var(--surface)));border:1px solid color-mix(in srgb,var(--bi-neon) 35%,var(--line));box-shadow:0 12px 24px var(--bi-glow)}
+#app .ux04-pandora .scd-pandora-heading{display:flex;align-items:center;gap:12px;grid-column:1;min-width:0;font-size:1rem}
+#app .ux04-pandora .ux04-pandora-avatar{display:block;flex:none;width:56px;height:56px;border-radius:17px;object-fit:cover;object-position:center 27%;border:2px solid color-mix(in srgb,var(--bi-neon) 50%,var(--line));background:var(--surface-2);box-shadow:0 4px 14px var(--bi-glow)}
+#app .ux04-pandora .scd-pandora-heading strong{font-weight:900;letter-spacing:-.02em;color:var(--text)}
+#app .ux04-pandora .scd-pandora-hint{margin-left:auto}
+#app .ux04-pandora #pandora-insight{grid-column:1;margin-left:68px;font-size:.96rem}
+#app .ux04-pandora .scd-pandora-refresh{grid-column:2;grid-row:1/3}
+/* Dashboard reorder: the month and primary action sit immediately below the header-Pandora widget. */
+#view-dashboard .ux04-hero-controls{padding:13px 17px!important;border:1px solid var(--line)!important;border-radius:15px;background:linear-gradient(105deg,var(--surface),color-mix(in srgb,var(--bi-cyan) 7%,var(--surface)))!important;color:var(--text)!important;box-shadow:var(--shadow);min-height:0;margin-bottom:14px}
+#view-dashboard .ux04-hero-controls:after{display:none}
+#view-dashboard .ux04-hero-controls .hero-actions{display:flex;justify-content:space-between;width:100%;gap:14px;align-items:center}
+#view-dashboard .ux04-hero-controls label{color:var(--text)!important}
+#view-dashboard .ux04-hero-controls input{background:var(--surface-2);color:var(--text)}
+#view-dashboard .ux04-hero-controls .btn.primary{min-height:45px}
+#view-dashboard .scd-quick-actions{margin:0 0 12px}
+#view-dashboard #scd-monthly-story{margin:0 0 17px;min-height:41px}
+/* Integrated financial summary: one prominent container, five cards, and optional secondary KPIs */
+#view-dashboard .ux04-summary{border:1px solid color-mix(in srgb,var(--bi-cyan) 34%,var(--line));background:linear-gradient(145deg,color-mix(in srgb,var(--bi-cyan) 9%,var(--surface)),color-mix(in srgb,var(--bi-neon) 9%,var(--surface)) 58%,var(--surface));border-radius:22px;padding:clamp(15px,2.1vw,26px);box-shadow:0 15px 35px var(--bi-glow);margin:0 0 20px;min-width:0}
+#view-dashboard .ux04-section-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+#view-dashboard .ux04-section-heading h2{font-size:clamp(1.3rem,2vw,1.7rem);font-weight:900;letter-spacing:-.035em;margin:2px 0}
+#view-dashboard .ux04-summary-note{font-size:.76rem;color:var(--muted);font-weight:700}
+#view-dashboard .ux04-summary .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px}
+#view-dashboard .ux04-summary .stat{background:linear-gradient(125deg,var(--surface),color-mix(in srgb,var(--primary) 11%,var(--surface)));min-width:0;border-radius:17px;min-height:125px}
+#view-dashboard .ux04-summary .stat strong{font-size:clamp(1.19rem,1.8vw,1.65rem);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#view-dashboard .ux04-more-bi{margin-top:15px;border-top:1px solid var(--line);padding-top:12px}
+#view-dashboard .ux04-more-bi>summary{cursor:pointer;color:var(--text);font-weight:750;padding:8px 4px}
+#view-dashboard .ux04-more-bi>.bi-panel{margin-top:10px}
+#view-dashboard .ux04-stage{margin:0 0 19px;min-width:0}
+#view-dashboard .ux04-stage>.panel{margin:0;min-width:0;background:linear-gradient(138deg,var(--surface),color-mix(in srgb,var(--primary) 5%,var(--surface)))}
+#view-dashboard #ux04-intelligence>.panel{border-color:color-mix(in srgb,var(--bi-cyan) 30%,var(--line));box-shadow:0 12px 28px var(--bi-glow)}
+#view-dashboard #ux04-intelligence .donut-layout{display:grid;grid-template-columns:minmax(230px,315px) minmax(0,1fr);align-items:center;gap:28px;min-height:310px}
+#view-dashboard #ux04-intelligence .donut{width:min(100%,300px);max-width:300px!important;min-width:0;margin:auto}
+#view-dashboard #ux04-comparison .trend-chart{min-height:230px}
+#view-dashboard .ux04-accounts-panel{margin:0 0 19px}
+/* Fixed sections: no hidden children and no interaction required to expand. */
+#side-nav .ux04-nav-permanent{display:grid;gap:1px;min-width:0;border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+#side-nav .ux04-nav-permanent .ux04-nav-title{margin:0 0 5px;padding:9px 12px 5px;font-size:.78rem;color:var(--muted);font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+#side-nav .ux04-nav-permanent button[data-view]{display:flex!important;visibility:visible!important;opacity:1!important;min-height:42px;width:100%;font-size:.88rem}
+#side-nav button[data-view="mimos"]{display:flex!important}
+#app .sidebar{scrollbar-width:thin}
+/* A dynamic resource selector; the legacy select still serves the existing account-only handler. */
+#transaction-form .ux04-original-source{display:none!important}
+#transaction-form .ux04-source-field{grid-column:span 1;display:grid;gap:6px;min-width:0}
+#transaction-form #ux04-source{width:100%;min-height:47px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);border-radius:12px;padding:10px 12px}
+#transaction-form #ux04-source option,#transaction-form #ux04-source optgroup{color:var(--text);background:var(--surface)}
+#transaction-form .ux04-source-hint{font-size:.78rem;color:var(--muted);line-height:1.45}
+#transaction-form .ux04-credit-status,#transaction-form .ux04-credit-interest{display:none!important}
+/* Branded confirmations, not browser-origin popups. */
+.ux04-dialog{border:1px solid color-mix(in srgb,var(--bi-neon) 40%,var(--line));background:var(--surface);color:var(--text);border-radius:23px;padding:0;max-width:min(94vw,450px);width:100%;box-shadow:0 30px 90px #0007}
+.ux04-dialog::backdrop{background:rgba(4,7,17,.72);backdrop-filter:blur(6px)}
+.ux04-dialog-body{display:grid;gap:15px;padding:27px}
+.ux04-dialog-icon{font-size:2rem;color:var(--primary)}
+.ux04-dialog-body h2{margin:0;font-size:1.36rem}
+.ux04-dialog-body p{margin:0;line-height:1.6;color:var(--muted);white-space:pre-wrap}
+.ux04-dialog-body label{display:grid;gap:7px;font-weight:750}
+.ux04-dialog-body input,.ux04-dialog-body select{width:100%;padding:12px;min-height:45px;border:1px solid var(--line);border-radius:12px;color:var(--text);background:var(--surface-2)}
+.ux04-dialog-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+#auth-screen .notice,#auth-screen #auth-message{line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:750px){
+ #app .ux04-pandora .ux04-pandora-avatar{width:45px;height:45px;border-radius:13px}
+ #app .ux04-pandora #pandora-insight{margin-left:0}
+ #app .ux04-pandora .scd-pandora-hint{display:none}
+ #view-dashboard .ux04-hero-controls .hero-actions{flex-wrap:wrap;justify-content:stretch}
+ #view-dashboard .ux04-hero-controls .hero-actions>*{flex:1 1 100%}
+ #view-dashboard .ux04-summary{padding:14px}
+ #view-dashboard .ux04-summary .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #view-dashboard .ux04-summary .stat{padding:12px;min-height:122px}
+ #view-dashboard #ux04-intelligence .donut-layout{grid-template-columns:1fr;min-height:0;gap:14px}
+ #view-dashboard #ux04-intelligence .donut{width:min(100%,260px);max-width:260px!important}
+ #transaction-form .ux04-source-field{grid-column:1/-1}
+}
+@media(max-width:370px){#view-dashboard .ux04-summary .stats{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#app .ux04-pandora,#view-dashboard .ux04-summary{transition:none;animation:none}}
+
+/* Fast choices: fewer taps, while keeping keyboard-accessible native fields. */
+#transaction-form .ux04-original-type{display:none!important}
+#transaction-form .ux04-quick-type{display:flex;flex-wrap:wrap;gap:9px;grid-column:1/-1}
+#transaction-form .ux04-quick-type button,#transaction-form .ux04-fast-installments button{appearance:none;min-height:44px;padding:10px 16px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:12px;font-weight:800;cursor:pointer}
+#transaction-form .ux04-quick-type button[aria-pressed="true"],#transaction-form .ux04-fast-installments button[aria-pressed="true"]{background:linear-gradient(125deg,color-mix(in srgb,var(--bi-neon) 18%,var(--surface)),color-mix(in srgb,var(--bi-cyan) 12%,var(--surface)));border-color:var(--primary);box-shadow:0 0 0 1px var(--primary-soft) inset}
+#transaction-form .ux04-quick-type button:focus-visible,#transaction-form .ux04-fast-installments button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+#transaction-form .ux04-fast-installments{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#transaction-form .ux04-fast-installments span{font-size:.81rem;color:var(--muted);font-weight:800;margin-right:3px}
+#transaction-form .ux04-fast-installments button{padding:7px 12px;min-width:46px}

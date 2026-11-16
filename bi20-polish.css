@@ -1,0 +1,95 @@
+/* Será Que Devo? — Beta 2.0 | Game Control Futurista aprovado
+ * Interface responsiva com dois modos: claro e escuro. Nenhuma regra financeira aqui.
+ * Direção estética: base 60% / estrutura 30% / acentos 10%.
+ */
+:root[data-theme="dark"]{
+ --bg:#0b0f19;--surface:#131a2a;--surface-2:#1d263b;--sidebar:#0d1221;--input:#0c1425;
+ --text:#f1f5f9;--muted:#b4bfd1;--line:#354056;--primary:#bf80ff;--primary-soft:#322544;
+ --pink:#ff72ca;--good:#57e1b0;--bad:#ffa3a9;--shadow:0 12px 36px rgba(0,0,0,.25);
+ --bi-neon:#ff63c7;--bi-cyan:#4be2f2;--bi-glow:rgba(141,62,223,.17);
+}
+:root[data-theme="light"]{
+ --bg:#f8fafc;--surface:#ffffff;--surface-2:#f0f3fa;--sidebar:#fff;
+ --input:#fff;--text:#161b37;--muted:#53627a;--line:#d7deeb;--primary:#7242cb;
+ --primary-soft:#efe5ff;--pink:#b72b87;--good:#056f55;--bad:#a92e45;
+ --bi-neon:#c52c98;--bi-cyan:#047f98;--bi-glow:rgba(90,45,160,.08);
+}
+:root{font-synthesis:none}
+body{background:radial-gradient(circle at 57% -23%,color-mix(in srgb,var(--bi-neon) 11%,transparent),transparent 51%),var(--bg);font-variant-numeric:tabular-nums}
+.app{grid-template-columns:251px minmax(0,1fr)}
+.sidebar{background:linear-gradient(160deg,var(--sidebar) 66%,color-mix(in srgb,var(--primary) 9%,var(--sidebar)));
+ border-right:1px solid color-mix(in srgb,var(--bi-neon) 15%,var(--line));padding:23px 13px}
+.sidebar:before{content:"BETA 2.0";font-size:10px;font-weight:900;letter-spacing:.19em;color:var(--bi-cyan);text-align:center;order:0;margin:0 0 5px}
+#side-nav button{min-height:44px;border-radius:12px;transition:background .18s,color .18s,transform .18s;border:1px solid transparent}
+#side-nav button:hover{transform:translateX(3px);border-color:color-mix(in srgb,var(--bi-neon) 18%,transparent)}
+#side-nav button.active{background:linear-gradient(100deg,color-mix(in srgb,var(--bi-cyan) 12%,var(--surface-2)),color-mix(in srgb,var(--bi-neon) 14%,var(--surface-2)))!important;border-color:color-mix(in srgb,var(--bi-cyan) 46%,var(--line));box-shadow:inset 3px 0 0 var(--bi-cyan),0 0 18px var(--bi-glow)}
+.main{max-width:1600px;padding-top:23px}.topbar{padding-bottom:13px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.topbar h1{font-size:clamp(1.3rem,2vw,1.8rem);letter-spacing:-.045em}
+.topright .pill{border:1px solid var(--line);background:var(--surface-2)}
+.hero{border:1px solid color-mix(in srgb,var(--bi-neon) 38%,var(--line));background:radial-gradient(circle at 94% 14%,rgba(253,101,201,.16),transparent 35%),linear-gradient(113deg,#201743,#493175)!important;color:#fff;box-shadow:0 20px 60px rgba(77,26,126,.22);position:relative;overflow:hidden}
+.hero:after{content:"✧";position:absolute;right:7%;top:9%;font-size:95px;opacity:.12;pointer-events:none}
+.hero h2{font-size:clamp(1.55rem,3vw,2.3rem);font-weight:900;letter-spacing:-.05em}
+.hero p,.hero .eyebrow{color:#f4eafe!important}
+.hero .btn.primary{background:linear-gradient(95deg,#f93aaf,#bb46f0);color:white;box-shadow:0 4px 18px #f93aaf66}
+.panel,.stat,.goal-card,.bi-panel{border:1px solid color-mix(in srgb,var(--bi-neon) 12%,var(--line));box-shadow:0 10px 26px var(--bi-glow);border-radius:18px;background:var(--surface)}
+.panel-header h3,.view-intro h2,.bi-panel h2{letter-spacing:-.035em}
+.bi-panel-title{border-bottom:1px solid var(--line);padding-bottom:12px}
+.bi-panel-title h2:before{content:"✦ ";color:var(--bi-neon)}
+.stats,.bi-kpis{gap:12px}
+.stat,.bi-kpi{transition:transform .2s ease,border .2s ease;min-width:0;position:relative;overflow:hidden}
+.stat:hover,.bi-kpi:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--bi-cyan) 45%,var(--line))}
+.stat:before{content:"";height:3px;position:absolute;inset:0 0 auto;background:linear-gradient(90deg,var(--bi-cyan),var(--bi-neon));opacity:.85}
+.stat strong,.bi-kpi strong{font-size:clamp(1.15rem,2.2vw,1.7rem);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.btn,.icon-btn,button{touch-action:manipulation}
+.btn{min-height:44px;border-radius:12px}
+.btn.primary,.sqd-calc-choice[aria-expanded=true]{background:linear-gradient(115deg,#a839d6,#ed3c9d);color:white;box-shadow:0 5px 16px rgba(178,48,179,.22)}
+:root[data-theme="light"] .btn.primary{background:linear-gradient(115deg,#6941bc,#c92a91)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--bi-cyan)!important;outline-offset:3px}
+.bi-edit>summary{min-height:52px;transition:background .16s}.bi-edit>summary:hover{background:color-mix(in srgb,var(--bi-neon) 8%,var(--surface-2))}
+.bi-item{border-radius:15px}.bi-item b{font-variant-numeric:tabular-nums}.bi-spotlight{background:linear-gradient(130deg,color-mix(in srgb,var(--bi-cyan) 10%,var(--surface)),color-mix(in srgb,var(--bi-neon) 9%,var(--surface)))}
+#view-profile .panel{margin-bottom:16px}
+#view-dashboard .bi-panel{background:linear-gradient(170deg,var(--surface),color-mix(in srgb,var(--primary) 5%,var(--surface)))}
+.scd-quick-actions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:12px 0 24px}
+.scd-action{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:15px;padding:12px 5px;min-height:94px;display:grid;place-items:center;align-content:center;gap:7px;box-shadow:0 8px 21px var(--bi-glow);font-weight:750;font-size:.73rem;text-align:center;line-height:1.3}
+.scd-action:hover{border-color:var(--bi-neon);transform:translateY(-2px)}
+.scd-action .scd-glyph{font-size:1.65rem;line-height:1}.scd-action.primary{color:#fff;background:linear-gradient(125deg,#ad35df,#f041a4);border-color:#ea6fc6}
+.scd-utility{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.scd-utility button{min-width:44px}
+.scd-status{font-size:.7rem;padding:5px 9px;border-radius:30px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.scd-story-screen{padding:22px;border-radius:16px;background:linear-gradient(130deg,color-mix(in srgb,var(--bi-neon) 12%,var(--surface)),color-mix(in srgb,var(--bi-cyan) 8%,var(--surface)));min-height:220px;display:grid;align-content:center;text-align:center;gap:14px}
+.scd-story-screen strong{font-size:clamp(1.6rem,5vw,2.35rem)}
+.scd-story-controls{display:flex;justify-content:space-between;gap:10px;margin-top:13px}
+.scd-story-controls button{flex:1}
+.scd-private [data-scd-money]{filter:blur(9px);pointer-events:none;user-select:none}
+.scd-dialog{width:min(560px,calc(100vw - 24px));max-width:none;border:1px solid var(--bi-neon);border-radius:22px;padding:22px;background:var(--surface);color:var(--text);box-shadow:0 24px 90px #03071199}
+.scd-dialog::backdrop{background:#010510c9}
+.scd-dialog h2{margin:0 0 15px}
+.scd-dialog .scd-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.scd-fab{display:none}
+.scd-screen-reader{position:absolute;clip-path:inset(50%);width:1px;height:1px;white-space:nowrap;overflow:hidden}
+.scd-data-note{font-size:.73rem;color:var(--muted);margin:11px 0}
+.sqd-calc-choice{min-height:110px}
+@media(max-width:1100px){.scd-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){
+ .main{padding:18px 13px 105px}.scd-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .scd-action{min-height:76px;padding:7px 4px;font-size:.71rem}.scd-action .scd-glyph{font-size:1.35rem}
+ .topbar{gap:8px;margin-bottom:12px}.topright{gap:5px}
+ .topright .pill{display:none}.hero{padding:21px!important}.hero .hero-actions{width:100%}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat{padding:13px!important}
+ .scd-fab{display:grid;place-items:center;position:fixed;right:calc(50% - 27px);bottom:14px;z-index:70;border:2px solid #f8bde7;border-radius:50%;width:54px;height:54px;background:linear-gradient(140deg,#d92cbb,#a545e6);color:white;font-size:1.9rem;box-shadow:0 6px 23px #d92cbb88}
+ .bottom-nav{padding-right:8px;padding-left:8px}.bottom-nav button{min-height:49px}
+ .bi-form{padding:12px}
+}
+@media(max-width:390px){.scd-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h2{font-size:1.55rem}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+#side-nav .scd-nav-group{border-top:1px solid var(--line);margin-top:7px;padding-top:6px;min-width:0}
+#side-nav .scd-nav-group summary{list-style:none;cursor:pointer;font-size:.72rem;color:var(--muted);font-weight:800;letter-spacing:.035em;padding:11px 9px;min-height:42px}
+#side-nav .scd-nav-group summary::-webkit-details-marker{display:none}
+#side-nav .scd-nav-group button{width:100%;font-size:.86rem}
+@media(max-width:700px){#side-nav .scd-nav-group button{min-height:45px}}
+/* Ocultar valores em todos os indicadores principais — configuração somente visual. */
+.scd-private #stat-in,.scd-private #stat-out,.scd-private #stat-net,.scd-private #stat-pending,.scd-private #stat-all,
+.scd-private #bi-accounts-summary,.scd-private #bi-debts-total,.scd-private #bi-insights-mini strong,
+.scd-private #bi-accounts-list b,.scd-private #bi-debts-list b,.scd-private #recent-items .amount,
+.scd-private #tx-table td:nth-child(4){filter:blur(9px);user-select:none}
+@media(max-width:700px){.scd-utility button:nth-child(2){display:none}.scd-utility .icon-btn{width:34px;height:36px;min-width:34px;font-size:1.15rem}.topright .icon-btn{width:36px;height:36px}}

@@ -1,0 +1,30 @@
+# SERÁ QUE DEVO? BI 2.0 - TESTES SEGUROS COM DADOS FICTÍCIOS
+# NÃO acessa o Supabase, NÃO modifica produção, NÃO publica a versão BI 2.0.
+name: SCD BI 2.0 - Testes financeiros offline
+
+on:
+  push:
+    branches:
+      - bi2-dev
+
+permissions:
+  contents: read
+
+jobs:
+  testar-financeiro:
+    name: Verificar regras financeiras
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ler arquivos da branch de testes
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Testar as regras financeiras do BI 2.0
+        run: node --test testes/06_testes_regras_financeiras_v0_2.test.mjs

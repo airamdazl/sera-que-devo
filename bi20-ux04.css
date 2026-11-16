@@ -45,7 +45,7 @@
 #transaction-form #ux04-source{width:100%;min-height:47px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);border-radius:12px;padding:10px 12px}
 #transaction-form #ux04-source option,#transaction-form #ux04-source optgroup{color:var(--text);background:var(--surface)}
 #transaction-form .ux04-source-hint{font-size:.78rem;color:var(--muted);line-height:1.45}
-#transaction-form .ux04-credit-status,#transaction-form .ux04-credit-interest{display:none!important}
+#transaction-form .ux04-credit-status{display:none!important}
 /* Branded confirmations, not browser-origin popups. */
 .ux04-dialog{border:1px solid color-mix(in srgb,var(--bi-neon) 40%,var(--line));background:var(--surface);color:var(--text);border-radius:23px;padding:0;max-width:min(94vw,450px);width:100%;box-shadow:0 30px 90px #0007}
 .ux04-dialog::backdrop{background:rgba(4,7,17,.72);backdrop-filter:blur(6px)}
@@ -92,3 +92,21 @@
 #scd-load-status p{font-size:.85rem;line-height:1.5;margin:5px 0 0;color:var(--muted);overflow-wrap:anywhere}
 #scd-retry-data{white-space:normal;min-height:44px;flex:0 0 auto}
 @media(max-width:600px){#scd-load-status{margin:10px 10px 14px;padding:14px}#scd-retry-data{width:100%}}
+
+/* UX07 — resumo único com os 11 indicadores, sem abas ou filtros extras. */
+#view-dashboard .ux04-summary .stats {align-items:stretch}
+#view-dashboard .ux04-summary .ux07-bi-inline {display:contents}
+#view-dashboard .ux04-summary .stats > .stat,
+#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi {min-width:0;min-height:137px;padding:17px;border:1px solid var(--line);border-radius:18px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--primary) 10%,var(--surface)));display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:9px;box-shadow:0 7px 19px var(--bi-glow)}
+#view-dashboard .ux04-summary .stats > .stat::before,
+#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi::before {content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--primary),var(--bi-neon),var(--bi-cyan));opacity:1}
+#view-dashboard .ux04-summary .stats > .stat span,
+#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi small {display:block;margin:0;font-size:.84rem;line-height:1.45;color:var(--muted);font-weight:650}
+#view-dashboard .ux04-summary .stats > .stat strong,
+#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi strong {font-size:clamp(1.14rem,1.8vw,1.6rem);line-height:1.22;font-variant-numeric:tabular-nums;color:var(--text);overflow-wrap:anywhere}
+#view-dashboard .ux04-summary .stats > .stat small {color:var(--muted);line-height:1.4;margin-top:auto;font-size:.74rem}
+#view-dashboard .ux04-summary .ux07-estimate {margin:13px 1px 0;color:var(--muted);font-size:.76rem;line-height:1.55}
+#transaction-form .ux07-interest-hint,#bi-card-purchase-form .ux07-interest-hint {display:block;font-weight:400;line-height:1.45;color:var(--muted);font-size:.76rem;margin-top:4px}
+#bi-card-purchase-form .ux07-interest-preview {grid-column:1/-1;padding:13px 15px;display:block;border:1px solid var(--line);border-radius:13px;background:var(--surface-2);color:var(--text);font-size:.86rem;line-height:1.5}
+@media(max-width:750px){#view-dashboard .ux04-summary .stats > .stat,#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi {min-height:129px;padding:13px;gap:8px}#view-dashboard .ux04-summary .stats > .stat strong,#view-dashboard .ux04-summary .stats > .ux07-bi-inline > .bi-kpi strong {font-size:clamp(1.04rem,4.1vw,1.35rem)}}
+@media(max-width:370px){#view-dashboard .ux04-summary .stats {grid-template-columns:repeat(2,minmax(0,1fr))}}

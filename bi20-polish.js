@@ -8,12 +8,13 @@ const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).
 let privateView=false;
 function make(t,c,txt){const el=document.createElement(t);if(c)el.className=c;if(txt!==undefined)el.textContent=txt;return el}
 function goTx(){go('transactions');const d=$('#transaction-form');if(d){const wrap=d.closest('details');if(wrap)wrap.open=true;d.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});d.querySelector('[name="amount"]')?.focus({preventScroll:true})}}
+function goHistory(){const b=window.SCD_BRIDGE;if(!b?.user)return;b.navigate('transactions',false);const history=$('#tx-table')?.closest('article.panel');if(history){requestAnimationFrame(()=>history.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'}))}}
 function init(){
  if(!$('#view-dashboard')||$('#scd-quick-actions'))return;
  // Shortcuts stay available even after collapsing the long sidebar.
- const actions=[['✍️','Novo lançamento','transactions',true],['🏦','Contas','bi-accounts'],['💳','Cartões','bi-cards'],['🧾','Dívidas','bi-debts'],['🎯','Sonhos','goals'],['🛒','Mercado','market']];
+ const actions=[['📜','Visualizar histórico','transactions',false],['🏦','Contas','bi-accounts'],['💳','Cartões','bi-cards'],['🧾','Dívidas','bi-debts'],['🎯','Sonhos','goals'],['🛒','Mercado','market']];
  const grid=make('div','scd-quick-actions');grid.id='scd-quick-actions';grid.setAttribute('aria-label','Atalhos do seu painel');
- for(const [icon,label,view,primary] of actions){const b=make('button','scd-action'+(primary?' primary':''));b.type='button';b.append(make('span','scd-glyph',icon),make('span','',label));b.addEventListener('click',()=>primary?goTx():go(view));grid.append(b)}
+ for(const [icon,label,view,primary] of actions){const b=make('button','scd-action'+(primary?' primary':''));b.type='button';b.append(make('span','scd-glyph',icon),make('span','',label));b.addEventListener('click',()=>view==='transactions'?goHistory():go(view));grid.append(b)}
  const dashboard=$('#view-dashboard'),hero=dashboard.querySelector('.hero');hero?.after(grid);
  const help=make('button','icon-btn','?');help.type='button';help.title='Ajuda e perguntas frequentes';help.setAttribute('aria-label','Ajuda e perguntas frequentes');help.addEventListener('click',()=>go('bi-help'));
  const eye=make('button','icon-btn','◉');eye.type='button';eye.title='Ocultar valores financeiros';eye.setAttribute('aria-label','Ocultar valores financeiros');eye.setAttribute('aria-pressed','false');eye.addEventListener('click',()=>{privateView=!privateView;$('#app').classList.toggle('scd-private',privateView);eye.textContent=privateView?'◌':'◉';eye.setAttribute('aria-pressed',String(privateView));eye.setAttribute('aria-label',privateView?'Mostrar valores financeiros':'Ocultar valores financeiros');});
@@ -30,8 +31,7 @@ function init(){
   for(const btn of side.querySelectorAll('button[data-view]')){const glyph=btn.querySelector('span');if(glyph&&icons[btn.dataset.view]){glyph.textContent=icons[btn.dataset.view];glyph.setAttribute('aria-hidden','true');glyph.classList.add('scd-nav-glyph')}}
 
  }
- // Fixed primary action within thumb reach on small screens.
- const fab=make('button','scd-fab','+');fab.type='button';fab.setAttribute('aria-label','Novo lançamento');fab.addEventListener('click',goTx);document.body.append(fab);
+ // Não criar botão flutuante: a navegação inferior já ocupa essa região.
  // Accessible export help; original PDF and CSV exporter remain unchanged.
  const exports=$('#view-reports .panel');if(exports)exports.insertAdjacentHTML('beforeend','<p class="scd-data-note">Os relatórios refletem os dados manuais e filtros selecionados. Confira os valores antes de tomar decisões. Guarde os arquivos em local privado.</p>');
  // Clear source attribution, no claim of a live banking connection.

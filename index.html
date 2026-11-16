@@ -87,8 +87,8 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="./bi20.css?v=2.0.6">
-<link rel="stylesheet" href="./bi20-polish.css?v=2.0.6"> <link rel="stylesheet" href="./bi20-ux02.css?v=2.0.6">
-<link rel="stylesheet" href="./bi20-ux04.css?v=2.0.6"></head>
+<link rel="stylesheet" href="./bi20-polish.css?v=2.0.7"> <link rel="stylesheet" href="./bi20-ux02.css?v=2.0.6">
+<link rel="stylesheet" href="./bi20-ux04.css?v=2.0.7"></head>
 <body>
 <a href="#main" class="skip">Ir ao conteúdo</a>
 <div id="toast" role="status" aria-live="polite" class="toast-stack"></div>
@@ -279,6 +279,9 @@ function scdDataStatus(info){
  else if(core.every(t=>(state[t]||[]).length===0))body.textContent='A sessão atual retornou zero registros nas coleções principais. Se você já tem registros, use “Tentar carregar novamente” ou saia e entre na mesma conta. Não recrie os dados.';
  else body.textContent=`Recuperados: ${counts}. Se os indicadores do mês estiverem zerados, confira o período selecionado.`;
  status.dataset.scdStatus=failed.length?'partial':(brokenRender.length?'render_error':(core.every(t=>(state[t]||[]).length===0)?'empty':'ok'));
+ // UX07: não interromper Pandora + seletor do mês com aviso de sucesso.
+ // Mensagens de consulta vazia, erro de leitura ou renderização continuam visíveis.
+ status.hidden=status.dataset.scdStatus==='ok';
 }
 async function fetchAll(){
  if(!user)return;
@@ -415,7 +418,7 @@ function setupEvents(){
 $('#auth-form').addEventListener('submit',authSubmit);$$('[data-auth-mode]').forEach(x=>x.addEventListener('click',()=>switchAuthMode(x.dataset.authMode)));$('#reset-password').addEventListener('click',resetPassword);$('#logout').addEventListener('click',logout);$('#change-password').addEventListener('click',changePassword);$('#password-form').addEventListener('submit',submitNewPassword);$('#delete-account').addEventListener('click',deleteAccount);
  $('#theme-desktop').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true));$('#theme-mobile').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true));
  $('#menu-toggle').addEventListener('click',()=>{const mobile=window.matchMedia('(max-width:750px)').matches;if(mobile){const open=!$('.sidebar').classList.contains('open');$('.sidebar').classList.toggle('open',open);$('#menu-toggle').setAttribute('aria-expanded',String(open));$('#mobile-shade').hidden=!open;}else{const collapsed=$('#app').classList.toggle('scd-sidebar-collapsed');$('#menu-toggle').setAttribute('aria-expanded',String(!collapsed));$('#menu-toggle').setAttribute('aria-label',collapsed?'Mostrar menu lateral':'Ocultar menu lateral');$('#mobile-shade').hidden=true;}});$('#mobile-shade').addEventListener('click',()=>{$('.sidebar').classList.remove('open');$('#mobile-shade').hidden=true;$('#menu-toggle').setAttribute('aria-expanded','false')});window.addEventListener('resize',()=>{if(!window.matchMedia('(max-width:750px)').matches){$('.sidebar').classList.remove('open');$('#mobile-shade').hidden=true;$('#menu-toggle').setAttribute('aria-expanded',String(!$('#app').classList.contains('scd-sidebar-collapsed')))}else{$('#menu-toggle').setAttribute('aria-expanded',String($('.sidebar').classList.contains('open')))}});
- $('#dashboard-month').addEventListener('change',renderDashboard);$('#pandora-insight-refresh').addEventListener('click',renderInsights);$('#tx-month').addEventListener('change',renderTransactions);$('#tx-type').addEventListener('change',renderTransactions);$('#tx-status').addEventListener('change',renderTransactions);$('#tx-search').addEventListener('input',renderTransactions);
+ $('#dashboard-month').addEventListener('change',()=>{renderDashboard();window.SCD_BI20?.renderBI?.()});$('#pandora-insight-refresh').addEventListener('click',renderInsights);$('#tx-month').addEventListener('change',renderTransactions);$('#tx-type').addEventListener('change',renderTransactions);$('#tx-status').addEventListener('change',renderTransactions);$('#tx-search').addEventListener('input',renderTransactions);
  $('#transaction-form').addEventListener('submit',submitTransaction);$('#transaction-form').elements.type.addEventListener('change',e=>categoryOptions(e.target.value));['amount','installments','interest'].forEach(n=>$('#transaction-form').elements[n].addEventListener('input',previewInstallments));$('#market-form').addEventListener('submit',e=>submitSimple('market_items',e));$('#note-form').addEventListener('submit',e=>submitSimple('notes',e));$('#goal-form').addEventListener('submit',e=>submitSimple('goals',e));$('#reminder-form').addEventListener('submit',e=>submitSimple('reminders',e));$('#mimo-form').addEventListener('submit',submitMimo);$('#checkout-market').addEventListener('click',checkoutMarket);
  $('#cal-prev').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1,12);renderCalendar()});$('#cal-next').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1,12);renderCalendar()});$('#calendar-grid').addEventListener('click',e=>{const btn=e.target.closest('[data-date]');if(!btn)return;selectedDay=btn.dataset.date;renderCalendar()});$('#calendar-day-details').addEventListener('click',e=>{if(e.target.closest('#day-new-reminder')){navigate('calendar');$('#reminder-form').elements.date.value=selectedDay;$('#reminder-form').scrollIntoView({behavior:'smooth'})}});
  $('#calc-financing').addEventListener('submit',calcFinancing);$('#calc-vacation').addEventListener('submit',calcVacation);$('#calc-termination').addEventListener('submit',calcTermination);$('#calc-mei').addEventListener('submit',calcMei);$('#calc-ir').addEventListener('submit',calcIR);$('#export-csv').addEventListener('click',exportCsv);$('#export-pdf').addEventListener('click',exportPdf);$('#export-json').addEventListener('click',exportJson);$('#market-export').addEventListener('click',marketCsv);$('#market-export-pdf').addEventListener('click',marketPdf);
@@ -639,7 +642,7 @@ window.addEventListener('load', () => {
 })();
 </script>
 <!-- FIM SCD BI 2.0 - ETAPA 01 UX -->
-<script src="./bi20.js?v=2.0.6"></script>
-<script src="./bi20-polish.js?v=2.0.6"></script>
-<script src="./bi20-ux04.js?v=2.0.6-loginfix01"></script>
+<script src="./bi20.js?v=2.0.7"></script>
+<script src="./bi20-polish.js?v=2.0.7"></script>
+<script src="./bi20-ux04.js?v=2.0.7"></script>
 </body></html>

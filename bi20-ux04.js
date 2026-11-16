@@ -72,7 +72,21 @@ function buildSummary(){
  const section=document.createElement('section');section.id='ux04-summary';section.className='ux04-summary';
  const heading=document.createElement('div');heading.className='ux04-section-heading';heading.innerHTML='<div><span class="eyebrow">SEU DINHEIRO EM UM SÓ LUGAR</span><h2>📊 Resumo Financeiro</h2></div><span class="ux04-summary-note">Dados informados por você</span>';
  section.append(heading,stats);
- if(insightPanel){const details=document.createElement('details');details.className='ux04-more-bi';details.innerHTML='<summary>Ver indicadores complementares do BI</summary>';details.append(insightPanel);section.append(details)}
+ // Unificar cinco indicadores existentes aos seis indicadores BI; preservar IDs e lógica de atualização.
+ const emojis=['💰','💸','📊','⏳','🧮'];
+ [...stats.querySelectorAll(':scope > .stat')].forEach((tile,i)=>{
+  const text=tile.querySelector('span');if(text&&!text.dataset.ux07Emoji){text.textContent=emojis[i]+' '+text.textContent;text.dataset.ux07Emoji='1'}
+ });
+ if(insightPanel){
+  const biGrid=insightPanel.querySelector('#bi-insights-mini');
+  if(biGrid){biGrid.classList.add('ux07-bi-inline');stats.append(biGrid)}
+  const estimate=insightPanel.querySelector('#bi-estimate-note');
+  if(estimate){estimate.classList.add('ux07-estimate');section.append(estimate)}
+  // Reutilizar texto institucional, sem duplicar o título "Resumo Financeiro".
+  const disclaimer=[...insightPanel.querySelectorAll('p.fine')].find(el=>el.id!=='bi-estimate-note');
+  if(disclaimer){disclaimer.classList.add('ux07-estimate');section.append(disclaimer)}
+  insightPanel.remove();
+ }
  const intel=document.createElement('section');intel.className='ux04-stage';intel.id='ux04-intelligence';intel.append(category);
  const compare=document.createElement('section');compare.className='ux04-stage';compare.id='ux04-comparison';compare.append(trend);
  const movements=document.createElement('section');movements.className='ux04-stage';movements.append(recent);
@@ -159,23 +173,25 @@ function syncSource(){
  old.value=account;old.dispatchEvent(new Event('change',{bubbles:false}));
  const status=f.elements.status?.closest('label');if(status)status.classList.toggle('ux04-credit-status',isCard);
  const hint=$('#ux04-source-hint');if(hint)hint.textContent=isCard?'Compra no crédito: o valor será dividido nas faturas. A conta bancária só é movimentada ao pagar a fatura.':'Pix, débito, dinheiro e receitas ajustam o saldo da conta quando marcados como realizados.';
- const interest=f.elements.interest?.closest('label');if(interest)interest.classList.toggle('ux04-credit-interest',isCard);
+ const interest=f.elements.interest?.closest('label');if(interest){interest.classList.remove('ux04-credit-interest');interest.querySelector('.ux07-interest-hint')?.remove();const hint=document.createElement('small');hint.className='ux07-interest-hint';hint.textContent=isCard?'Opcional · informe a porcentagem total de juros sobre a compra. Sem juros? Deixe 0.':'Opcional · porcentagem total de juros da compra.';interest.append(hint)}
  try{const uid=bridge()?.user?.id;if(uid&&select.value)localStorage.setItem('scd-ux04-source-'+uid,select.value)}catch{}
 }
 async function saveCreditPurchase(form,cardId){
  const b=bridge();if(!b?.user||!b.db){notify('Entre na sua conta para registrar.',true);return}
  if(form.elements.edit_id?.value){notify('A edição de uma compra antiga deve ser feita no histórico. Use Novo lançamento para registrar uma compra no crédito.',true);return}
  if(form.elements.type.value!=='expense'){notify('Cartão de crédito só pode ser usado para registrar despesas.',true);return}
- if(Number(form.elements.interest?.value||0)>0){notify('Para registrar juros no cartão, utilize a área de Cartões. Este formulário não calcula encargos.',true);return}
  const amount=Number(form.elements.amount.value),n=Number(form.elements.installments.value);
+ const rate=Number(form.elements.interest?.value||0);
+ if(!Number.isFinite(rate)||rate<0||rate>300){notify('Informe juros entre 0% e 300%. Se não houver juros, deixe 0.',true);return}
+ const totalCents=Math.round(Math.round(amount*100)*(1+rate/100));
  if(!Number.isFinite(amount)||amount<=0||!Number.isInteger(n)||n<1||n>60){notify('Confira o valor e escolha entre 1 e 60 parcelas.',true);return}
- if(Math.round(amount*100)<n){notify('O valor é pequeno demais para essa quantidade de parcelas.',true);return}
+ if(!Number.isSafeInteger(totalCents)||totalCents<n){notify('O total com juros é inválido ou pequeno demais para essa quantidade de parcelas.',true);return}
  if(!form.elements.description.value.trim()||!form.elements.date.value){notify('Preencha descrição e data da compra.',true);return}
  const button=form.querySelector('button[type="submit"]');if(button?.disabled)return;button.disabled=true;
  try{
-  const payload={user_id:b.user.id,card_id:cardId,description:form.elements.description.value.trim(),category:form.elements.category.value||'Compras',total:Math.round(amount*100)/100,installments:n,purchase_date:form.elements.date.value};
+  const payload={user_id:b.user.id,card_id:cardId,description:form.elements.description.value.trim(),category:form.elements.category.value||'Compras',total:totalCents/100,installments:n,purchase_date:form.elements.date.value};
   const {error}=await b.db.from('scd_card_purchases').insert(payload);if(error)throw error;
-  notify(`Compra registrada no cartão! ${n} ${n===1?'parcela':'parcelas'} nas faturas, sem débito imediato na conta.`);
+  notify(`Compra registrada no cartão! ${n} ${n===1?'parcela':'parcelas'} com total de ${money(totalCents/100)}${rate>0?' (juros de '+rate+'% incluídos)':''}, sem débito imediato na conta.`);
   form.reset();form.elements.installments.value='1';form.elements.interest.value='0';
   await window.SCD_BI20?.fetchExtra?.();await b.fetchAll?.();
   refreshSources();

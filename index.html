@@ -354,4 +354,191 @@ window.addEventListener('load', () => {
 
 })();
 </script>
+
+  <!-- INICIO SCD BI 2.0 - ETAPA 01 UX (sem mudancas de banco) -->
+<style id="sqd-bi20-ux01-css">
+/* Complemento visual reversivel. Preserva variaveis claro/escuro existentes. */
+:root {
+  --sqd-neon: #c448d9;
+  --sqd-glow: rgba(135,80,233,.16);
+}
+:root[data-theme="dark"] {
+  --sqd-neon: #f17fd0;
+  --sqd-glow: rgba(193,91,240,.17);
+}
+#app .panel, #app .stat, #app .goal-card {
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+#app .stat {position:relative; overflow:hidden}
+#app .stat::before {
+  content:"";position:absolute;inset:0 auto 0 0;width:4px;
+  background:linear-gradient(180deg,var(--primary),var(--sqd-neon));
+}
+#app .btn.primary {
+  background:linear-gradient(115deg,var(--primary),var(--sqd-neon));
+  color:#fff;border-color:transparent;
+}
+#app .panel:focus-within,
+#app .sqd-quick-toggle:focus-visible,
+#app .sqd-calc-choice:focus-visible {
+  outline:2px solid var(--primary);outline-offset:2px;
+}
+/* Pandora flutuante ocultada; conteudo e IDs preservados para nao quebrar JavaScript existente. */
+#pandora-fab,#pandora-panel {display:none !important}
+/* Formularios contextuais */
+#app .sqd-quick-toggle {
+  display:flex; align-items:center; justify-content:space-between;gap:10px;
+  width:100%;text-align:left;cursor:pointer;padding:14px 17px;margin:0 0 12px;
+  border-radius:16px;color:var(--text);background:var(--surface);
+  border:1px solid var(--line);box-shadow:var(--shadow);font-weight:800;font-size:1rem;
+}
+#app .sqd-quick-toggle .sqd-pill {
+  font-size:.73rem;font-weight:800;padding:5px 9px;border-radius:999px;
+  background:var(--primary-soft);color:var(--primary);
+}
+#app .sqd-collapsed {display:none !important}
+#app .sqd-filter-box {margin:0 0 14px;min-width:0}
+#app .sqd-filter-box>summary {
+  list-style:none;cursor:pointer;padding:12px 14px;border-radius:13px;
+  background:var(--surface-2);color:var(--text);font-weight:750;
+  border:1px solid var(--line);
+}
+#app .sqd-filter-box>summary::-webkit-details-marker {display:none}
+#app .sqd-filter-box[open]>.filters {margin:12px 0}
+/* Calculadoras: escolher ferramenta antes de abrir formulario */
+#app .sqd-calc-menu {display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:0 0 20px}
+#app .sqd-calc-choice {
+  min-height:114px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:7px;padding:17px;border-radius:18px;cursor:pointer;text-align:left;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--text);
+}
+#app .sqd-calc-choice[aria-expanded="true"] {
+  border-color:var(--primary);box-shadow:0 0 0 3px var(--sqd-glow);
+}
+#app .sqd-calc-choice .sqd-icon {font-size:1.65rem;line-height:1}
+#app .sqd-calc-choice .sqd-info {font-size:.75rem;color:var(--muted)}
+#app .sqd-calc-close {grid-column:1/-1;justify-self:start}
+#app .calc-grid>.sqd-calc-hidden {display:none !important}
+/* Notas com aspecto de mural de papel, sem alterar os dados antigos. */
+#notes-items .postit {border-radius:5px 17px 7px 14px;transform:rotate(-.3deg);box-shadow:2px 6px 14px rgba(0,0,0,.09)}
+#notes-items .postit:nth-child(4n+1){background:#fff1a9;color:#382d3d}
+#notes-items .postit:nth-child(4n+2){background:#ffd4e8;color:#382d3d}
+#notes-items .postit:nth-child(4n+3){background:#d3f4db;color:#233e2f}
+#notes-items .postit:nth-child(4n+4){background:#d5eaff;color:#263d54}
+#notes-items .postit button {color:inherit}
+@media(max-width:750px) {
+  /* Historico vira lista de cartoes, sem scroll horizontal */
+  #view-transactions .table-scroll {overflow:visible;max-width:100%}
+  #view-transactions table {width:100%;display:block;min-width:0}
+  #view-transactions thead {display:none}
+  #view-transactions tbody {display:grid;gap:12px;width:100%}
+  #view-transactions tbody tr {display:block;background:var(--surface-2);border:1px solid var(--line);border-radius:15px;padding:12px;min-width:0}
+  #view-transactions tbody td {display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0;width:100%;padding:7px 0;border:0;overflow-wrap:anywhere;text-align:right}
+  #view-transactions tbody td::before {font-weight:700;color:var(--muted);font-size:.75rem;text-align:left;flex:0 0 30%}
+  #view-transactions tbody td:nth-child(1)::before {content:"Data"}
+  #view-transactions tbody td:nth-child(2)::before {content:"Descrição"}
+  #view-transactions tbody td:nth-child(3)::before {content:"Categoria"}
+  #view-transactions tbody td:nth-child(4)::before {content:"Valor"}
+  #view-transactions tbody td:nth-child(5)::before {content:"Situação"}
+  #view-transactions tbody td:nth-child(6)::before {content:"Ações"}
+  #view-transactions tbody td[colspan="6"] {display:block;text-align:left}
+  #view-transactions tbody td[colspan="6"]::before{content:none}
+  #view-transactions tbody .row-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+  #app .sqd-calc-menu {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #app .sqd-calc-choice {min-height:106px;padding:12px}
+  #app .sqd-quick-toggle{padding:12px 14px}
+}
+@media(prefers-reduced-motion:reduce){#app .sqd-calc-choice,#app .sqd-quick-toggle{transition:none!important}}
+</style>
+<script id="sqd-bi20-ux01-script">
+(function(){
+  'use strict';
+  // Essa camada modifica SOMENTE a interface. Nenhuma consulta/gravação no Supabase.
+  if (window.__scdBi20Ux01) return;
+  window.__scdBi20Ux01=true;
+  const $=id=>document.getElementById(id);
+  const openForms=new Map();
+  const descriptions={
+    'transaction-form':['＋ Novo lançamento','Novo lançamento'],
+    'market-form':['＋ Adicionar produto','Produto'],
+    'reminder-form':['＋ Novo compromisso','Calendário'],
+    'note-form':['＋ Novo post-it','Nota'],
+    'goal-form':['＋ Novo sonho ou meta','Meta'],
+    'profile-form':['Editar meus dados','Perfil'],
+    'mimo-form':['＋ Registrar mimo','Mimo']
+  };
+  function stamp(form){try{return JSON.stringify(Array.from(new FormData(form).entries()));}catch{return ''}}
+  function makeEl(tag,cl,text){const el=document.createElement(tag);if(cl)el.className=cl;if(text)el.textContent=text;return el}
+  function toggleForm(id,show,options={}){
+    const form=$(id),entry=openForms.get(id);if(!form||!entry)return false;
+    if(!show&&!options.force && !form.classList.contains('sqd-collapsed') && stamp(form)!==entry.initial){
+      if(!window.confirm('Há alterações não salvas neste formulário. Fechar mesmo assim?'))return false;
+    }
+    form.classList.toggle('sqd-collapsed',!show);
+    entry.button.setAttribute('aria-expanded',String(show));
+    entry.hint.textContent=show?'Ocultar formulário':'Abrir formulário';
+    if(show){entry.initial=stamp(form);if(options.focus){form.querySelector('input:not([type="hidden"]),select,textarea')?.focus({preventScroll:true});}}
+    return true;
+  }
+  for(const [id,[title]] of Object.entries(descriptions)){
+    const form=$(id);if(!form)continue;
+    const btn=makeEl('button','sqd-quick-toggle');btn.type='button';btn.setAttribute('aria-controls',id);btn.setAttribute('aria-expanded','false');
+    const label=makeEl('span','',title),hint=makeEl('span','sqd-pill','Abrir formulário');btn.append(label,hint);
+    form.parentNode.insertBefore(btn,form);
+    openForms.set(id,{button:btn,hint,initial:''});
+    btn.addEventListener('click',()=>toggleForm(id,form.classList.contains('sqd-collapsed'),{focus:true}));
+    form.classList.add('sqd-collapsed');
+  }
+  // Edição de registros: abrir ANTES que a rotina original escolha os dados e role até o form.
+  const formByTable={transactions:'transaction-form',market_items:'market-form',mimos:'mimo-form',reminders:'reminder-form',notes:'note-form',goals:'goal-form'};
+  document.addEventListener('click',e=>{
+    const edit=e.target.closest('button[data-action="edit"][data-table]');
+    if(edit){const id=formByTable[edit.dataset.table];if(id){toggleForm(id,true);queueMicrotask(()=>{const entry=openForms.get(id),form=$(id);if(entry&&form)entry.initial=stamp(form);});}}
+    const nav=e.target.closest('[data-goto="transactions"],[data-view="transactions"]');
+    if(nav&&(nav.closest('#view-dashboard')||nav.closest('#bottom-nav'))){toggleForm('transaction-form',true);}
+  },true);
+  // Filtros escondidos por padrão: mantém os mesmos inputs e eventos do app.
+  const filters=[['#view-transactions .filters','Filtrar lançamentos'],['#view-reports .filters','Filtros do relatório']];
+  for(const [selector,title] of filters){
+    const original=document.querySelector(selector);if(!original)continue;
+    const details=makeEl('details','sqd-filter-box'),summary=makeEl('summary','',`⚙ ${title} · toque para abrir`);
+    original.parentNode.insertBefore(details,original);details.append(summary,original);
+  }
+  // Preserva as 5 calculadoras e suas fontes; abre uma de cada vez.
+  const calcInfo=[
+    ['calc-financing','🏠','Financiamento','Price × SAC'],
+    ['calc-vacation','🌴','Férias CLT','Estimativa de férias'],
+    ['calc-termination','🧾','Rescisão CLT','Estimativa trabalhista'],
+    ['calc-mei','🛍️','MEI','Enquadramento'],
+    ['calc-ir','📑','Imposto de Renda','Obrigatoriedade IRPF']
+  ];
+  const calcGrid=document.querySelector('#view-calculators .calc-grid');
+  if(calcGrid){
+    const menu=makeEl('div','sqd-calc-menu');menu.setAttribute('aria-label','Escolha uma calculadora');
+    calcGrid.parentNode.insertBefore(menu,calcGrid);
+    const choices=[];
+    function selectCalc(id){
+      const form=$(id),wasOpen=form&&!form.classList.contains('sqd-calc-hidden');
+      for(const [other] of calcInfo){$(other)?.classList.add('sqd-calc-hidden')}
+      for(const btn of choices)btn.setAttribute('aria-expanded','false');
+      if(form&&!wasOpen){form.classList.remove('sqd-calc-hidden');const b=choices.find(x=>x.dataset.calc===id);b?.setAttribute('aria-expanded','true');form.scrollIntoView({behavior:'smooth',block:'start'});}
+    }
+    for(const [id,ico,label,subtitle] of calcInfo){
+      const form=$(id);if(!form)continue;
+      const btn=makeEl('button','sqd-calc-choice');btn.type='button';btn.dataset.calc=id;btn.setAttribute('aria-controls',id);btn.setAttribute('aria-expanded','false');
+      btn.append(makeEl('span','sqd-icon',ico),makeEl('strong','',label),makeEl('span','sqd-info',subtitle));
+      btn.addEventListener('click',()=>selectCalc(id));menu.append(btn);choices.push(btn);
+      const back=makeEl('button','btn ghost sqd-calc-close','← Voltar às calculadoras');back.type='button';back.addEventListener('click',()=>{selectCalc(id);menu.scrollIntoView({behavior:'smooth',block:'start'});});
+      form.insertBefore(back,form.firstChild);form.classList.add('sqd-calc-hidden');
+    }
+  }
+  // Sugestões e categorias do mercado: apenas opções de formulário, não cria transações.
+  const suggestions=['Macarrão','Farinha de trigo','Farinha de mandioca','Fubá','Sal','Pimenta','Vinagre','Azeite','Molho de tomate','Extrato de tomate','Milho','Ervilha','Atum','Sardinha','Leite condensado','Creme de leite','Manteiga','Margarina','Requeijão','Queijo','Presunto','Iogurte','Pão de forma','Pão francês','Biscoito','Bolacha','Torrada','Cereal','Aveia','Granola','Mel','Achocolatado','Chá','Água mineral','Água com gás','Suco','Refrigerante','Carne bovina','Frango','Peixe','Linguiça','Hambúrguer','Batata','Cebola','Alho','Tomate','Cenoura','Alface','Couve','Banana','Maçã','Laranja','Limão','Mamão','Abacaxi','Abacate','Melancia','Uva','Morango','Pera','Arroz integral','Feijão preto','Lentilha','Grão-de-bico','Ovos caipiras','Papel toalha','Guardanapo','Papel alumínio','Filme plástico','Saco de lixo','Esponja','Desinfetante','Água sanitária','Amaciante','Sabão líquido','Detergente líquido','Limpador multiuso','Shampoo','Condicionador','Sabonete','Creme dental','Escova de dentes','Desodorante','Absorvente','Fralda','Lenço umedecido','Ração para gato','Ração para cachorro','Areia sanitária','Pilhas','Lâmpada'];
+  const datalist=$('market-suggestions');if(datalist){const existing=new Set([...datalist.options].map(o=>o.value.toLocaleLowerCase('pt-BR')));for(const name of suggestions){if(existing.has(name.toLocaleLowerCase('pt-BR')))continue;const o=document.createElement('option');o.value=name;datalist.append(o);}}
+  const category=document.querySelector('#market-form [name="category"]');
+  if(category){const existing=new Set([...category.options].map(o=>o.value));for(const name of ['Mercearia','Bebidas','Padaria','Açougue e peixaria','Frios e laticínios','Congelados','Pet','Bebê','Farmácia','Papelaria','Utilidades domésticas']){if(existing.has(name))continue;const o=document.createElement('option');o.value=name;o.textContent=name;category.append(o);}}
+})();
+</script>
+<!-- FIM SCD BI 2.0 - ETAPA 01 UX -->
 </body></html>

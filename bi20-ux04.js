@@ -66,7 +66,9 @@ function buildSummary(){
  const bankPanel=$('#bi-bank-overview')?.closest('.bi-panel');const insightPanel=$('#bi-insights-mini')?.closest('.bi-panel');
  if(!hero||!stats||!category||!trend)return;
  hero.classList.add('ux04-hero-controls');
- const intro=hero.querySelector(':scope > div:first-child');intro?.remove();
+ const intro=hero.querySelector(':scope > div:first-child');
+ // HOTFIX UX06: #hello continua necessario ao login; oculte sem destruir o no.
+ if(intro){intro.hidden=true;intro.style.display='none';}
  const section=document.createElement('section');section.id='ux04-summary';section.className='ux04-summary';
  const heading=document.createElement('div');heading.className='ux04-section-heading';heading.innerHTML='<div><span class="eyebrow">SEU DINHEIRO EM UM SÓ LUGAR</span><h2>📊 Resumo Financeiro</h2></div><span class="ux04-summary-note">Dados informados por você</span>';
  section.append(heading,stats);

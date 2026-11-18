@@ -419,6 +419,7 @@ async function payLegacy(id,paid){const t=B()?.state?.transactions?.find(x=>x.id
  if(!await window.SCD_UI.confirm(paid?'Confirmar pagamento ou recebimento?':'Devolver este lançamento para pendente?','Confirmar alteração'))return;
  await action(()=>db().from('transactions').update({status:paid?'paid':'pending',paid_at:paid?day():null,account_id:account}).eq('id',id).eq('user_id',uid()),paid?'Pagamento confirmado.':'Lançamento pendente novamente.');}
 */
+/* Histórico de pagamento por seleção de conta apenas — preservado.
 async function payLegacy(id,paid){const t=B()?.state?.transactions?.find(x=>x.id===id);if(!t)return;
  let account=t.account_id||null;
  if(paid){const options=[{value:'__other__',label:'Outra forma / não vincular conta'},...store.accounts.filter(a=>a.active).map(a=>({value:a.id,label:`${bankIcon(a)} ${a.name}`}))];
@@ -428,6 +429,36 @@ async function payLegacy(id,paid){const t=B()?.state?.transactions?.find(x=>x.id
  }
  if(!await window.SCD_UI.confirm(paid?'Confirmar pagamento ou recebimento?':'Devolver este lançamento para pendente?','Confirmar alteração'))return;
  await action(()=>db().from('transactions').update({status:paid?'paid':'pending',paid_at:paid?day():null,account_id:account}).eq('id',id).eq('user_id',uid()),paid?'Pagamento confirmado.':'Lançamento pendente novamente.');}
+FIM DO HISTÓRICO */
+// Beta 3.0: confirmar um lançamento pendente distingue meio usado e conta vinculada.
+// O registro já existe; esta função muda status e anotação, sem criar novo lançamento.
+async function payLegacy(id,paid){
+ const t=B()?.state?.transactions?.find(x=>x.id===id);if(!t)return;
+ let account=t.account_id||null, note=t.note||'';
+ if(paid){
+  const methods=t.type==='income'?
+   [{value:'pix',label:'📱 Pix'},{value:'transfer',label:'🏦 Transferência bancária'},{value:'money',label:'💵 Dinheiro'},{value:'deposit',label:'🏧 Depósito'},{value:'benefit',label:'🎫 Crédito em benefício'},{value:'other',label:'✦ Outra forma'}]:
+   [{value:'pix',label:'📱 Pix'},{value:'debit',label:'💳 Débito'},{value:'money',label:'💵 Dinheiro'},{value:'credit',label:'💳 Crédito sem fatura cadastrada'},{value:'boleto',label:'🧾 Boleto'},{value:'transfer',label:'🏦 Transferência'},{value:'vr',label:'🍽️ VR'},{value:'va',label:'🛒 VA'},{value:'other',label:'✦ Outra forma'}];
+  const names={pix:'Pix',debit:'Débito',money:'Dinheiro',credit:'Crédito (sem fatura vinculada)',boleto:'Boleto',transfer:'Transferência',vr:'VR',va:'VA',deposit:'Depósito',benefit:'Crédito de benefício',other:'Outra forma'};
+  const original=note.match(/^\[Forma: ([^\]]+)\]\s*/);
+  const previous=original?Object.keys(names).find(k=>names[k]===original[1])||'other':'other';
+  const method=await window.SCD_UI.choose('Escolha como o valor foi recebido ou pago.',methods,previous,'Forma do lançamento');
+  if(!method)return;
+  const eligible=store.accounts.filter(a=>a.active&&(method==='vr'?isBenefitWallet(a)&&a.institution==='VR':method==='va'?isBenefitWallet(a)&&a.institution==='VA':method==='benefit'?isBenefitWallet(a):method==='money'?(a.kind==='cash'||(a.kind==='wallet'&&!isBenefitWallet(a))):!isBenefitWallet(a)));
+  if(method==='benefit'&&!eligible.length){info('Cadastre uma carteira de benefício antes de registrar crédito VR/VA.',true);return;}
+  const choices=[{value:'__other__',label:'Sem vincular uma conta (não atualiza saldo bancário)'},...eligible.map(a=>({value:a.id,label:`${bankIcon(a)} ${a.name}${isBenefitWallet(a)?' · '+a.institution:''}`}))];
+  const selected=eligible.some(a=>a.id===account)?account:'__other__';
+  const chosen=await window.SCD_UI.choose('Agora escolha onde o valor entrou ou saiu. É opcional vincular uma conta.',choices,selected,'Conta ou carteira');
+  if(!chosen)return;
+  account=chosen==='__other__'?null:chosen;
+  if(method==='benefit'&&!account){info('Para registrar crédito de benefício, selecione a carteira correspondente.',true);return;}
+  if(account)remember('account',account);
+  const raw=note.replace(/^\[Forma: [^\]]+\]\s*/,'').trim();note=`[Forma: ${names[method]}]${raw?' '+raw:''}`;
+  if(note.length>300){info('Observação muito longa para incluir a forma do lançamento.',true);return;}
+ }
+ if(!await window.SCD_UI.confirm(paid?'Confirmar pagamento ou recebimento?':'Devolver este lançamento para pendente?','Confirmar alteração'))return;
+ await action(()=>db().from('transactions').update({status:paid?'paid':'pending',paid_at:paid?day():null,account_id:account,note}).eq('id',id).eq('user_id',uid()),paid?'Pagamento confirmado.':'Lançamento pendente novamente.');
+}
 async function setAll(checked){await action(()=>db().from('market_items').update({checked}).eq('user_id',uid()),checked?'Todos os itens selecionados.':'Itens desmarcados.')}
 // Dicas educativas consistentes com o material de orçamento do Banco Central; não inferem dados não informados.
 const MARKET_EDUCATION_TIPS=[

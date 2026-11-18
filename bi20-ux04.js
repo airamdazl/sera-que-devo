@@ -40,7 +40,7 @@ function showDialog({title,message,kind='confirm',items=[],selected='',confirmLa
 window.SCD_UI={
  confirm:(message,title='Confirmar ação')=>showDialog({title,message,confirmLabel:'Continuar'}),
  askText:(message,title='Confirmação')=>showDialog({title,message,kind:'text'}),
- choose:(message,items,selected='')=>showDialog({title:'Selecionar conta',message,kind:'choice',items,selected,confirmLabel:'Escolher'})
+ choose:(message,items,selected='',title='Escolher opção')=>showDialog({title,message,kind:'choice',items,selected,confirmLabel:'Escolher'})
 };
 
 function installSidebar(){
@@ -105,6 +105,7 @@ function enhancePandora(){const p=$('.scd-pandora-header');if(!p)return;p.classL
  const hint=$('.scd-pandora-hint',p);if(hint)hint.textContent='Dicas baseadas nos seus lançamentos';
 }
 
+/* ARQUIVO HISTÓRICO: implementação do seletor único UX04 — preservada.
 function installSourceSelector(){
  const form=$('#transaction-form');if(!form||$('#ux04-source'))return;
  const old=$('#bi-tx-account');if(!old)return;
@@ -140,19 +141,110 @@ function installSourceSelector(){
  },true);
  refreshSources();
 }
+FIM DO HISTÓRICO UX04 */
+/* BETA 3.0 — LANÇAMENTOS CLAROS, MÍNIMA INTERVENÇÃO.
+ * Forma (Pix/débito/etc.) != destino financeiro (conta/cartão).
+ * Sem campo novo no banco: a forma é armazenada como anotação legível no campo note.
+ * Cartão cadastrado usa EXCLUSIVAMENTE scd_card_purchases, nunca transactions.
+ */
+const UX_PAYMENT_METHODS={
+ expense:[['pix','📱 Pix'],['debit','💳 Débito'],['money','💵 Dinheiro'],['credit','💳 Crédito'],['boleto','🧾 Boleto'],['transfer','🏦 Transferência'],['vr','🍽️ VR · Refeição'],['va','🛒 VA · Alimentação'],['other','✦ Outra forma']],
+ income:[['pix','📱 Pix'],['transfer','🏦 Transferência'],['money','💵 Dinheiro'],['deposit','🏧 Depósito'],['benefit','🎫 Crédito em benefício'],['other','✦ Outra forma']]
+};
+const UX_METHOD_DESCRIPTIONS={
+ pix:'Pix',debit:'Débito',money:'Dinheiro',credit:'Crédito (sem fatura vinculada)',boleto:'Boleto',transfer:'Transferência',vr:'VR',va:'VA',deposit:'Depósito',benefit:'Crédito de benefício',other:'Outra forma'
+};
+function uxPaymentIsBenefit(a){return a?.kind==='wallet'&&['VR','VA','Benefício'].includes(String(a.institution||''));}
+function uxPaymentCleanNote(value){return String(value||'').replace(/^\[Forma: [^\]]{1,90}\]\s*/,'').trim();}
+function uxPaymentExistingMethod(note){const match=String(note||'').match(/^\[Forma: ([^\]]+)\]/);if(!match)return null;return Object.keys(UX_METHOD_DESCRIPTIONS).find(x=>UX_METHOD_DESCRIPTIONS[x]===match[1])||'other';}
+function uxPaymentTypeControls(){const f=$('#transaction-form'),group=$('.ux04-quick-type',f);if(!f||!group)return;
+ for(const b of $$('[data-ux04-type]',group))b.setAttribute('aria-pressed',String(b.dataset.ux04Type===f.elements.type.value));
+}
+function uxPaymentMethodChoices(preferred=''){
+ const f=$('#transaction-form'),method=$('#ux04-method');if(!f||!method)return;
+ const allowed=UX_PAYMENT_METHODS[f.elements.type.value]||UX_PAYMENT_METHODS.expense;
+ const choices=[new Option('Selecione a forma',''),...allowed.map(([value,label])=>new Option(label,value))];
+ method.replaceChildren(...choices);
+ if(preferred&&allowed.some(([v])=>v===preferred))method.value=preferred;
+}
+function installSourceSelector(){
+ const form=$('#transaction-form');if(!form||$('#ux04-source'))return;
+ const old=$('#bi-tx-account');if(!old)return;
+ const wrap=old.closest('label');if(wrap)wrap.classList.add('ux04-original-source');
+ const methodLabel=document.createElement('label');methodLabel.className='ux04-method-field';methodLabel.textContent='1. Como foi pago?';
+ const method=document.createElement('select');method.id='ux04-method';method.setAttribute('aria-describedby','ux04-method-help');method.required=true;
+ methodLabel.append(method);const methodHelp=document.createElement('small');methodHelp.id='ux04-method-help';methodHelp.textContent='Primeiro escolha Pix, dinheiro, cartão ou outra forma.';methodLabel.append(methodHelp);
+ const label=document.createElement('label');label.className='ux04-source-field';label.hidden=true;label.textContent='2. Onde registrar?';
+ const select=document.createElement('select');select.id='ux04-source';select.setAttribute('aria-describedby','ux04-source-hint');select.required=false;
+ label.append(select);const hint=document.createElement('small');hint.id='ux04-source-hint';hint.className='ux04-source-hint';label.append(hint);
+ const preview=document.createElement('div');preview.className='ux04-payment-preview';preview.id='ux04-payment-preview';preview.setAttribute('role','status');preview.setAttribute('aria-live','polite');
+ const type=form.elements.type;const typeLabel=type?.closest('label');
+ if(typeLabel){typeLabel.classList.add('ux04-original-type');const types=document.createElement('div');types.className='ux04-quick-type';types.setAttribute('role','group');types.setAttribute('aria-label','Tipo do lançamento');
+  types.innerHTML='<button type="button" data-ux04-type="expense" aria-pressed="true">↘ Saída</button><button type="button" data-ux04-type="income" aria-pressed="false">↗ Entrada</button>';
+  typeLabel.before(types);types.addEventListener('click',ev=>{const button=ev.target.closest('button[data-ux04-type]');if(!button)return;type.value=button.dataset.ux04Type;type.dispatchEvent(new Event('change',{bubbles:true}));});
+ }
+ wrap.after(methodLabel,label,preview);
+ // Mais espaço para a decisão importante, menos para juros/parcelas opcionais.
+ const installments=form.elements.installments,installmentLabel=installments?.closest('label'),interestLabel=form.elements.interest?.closest('label');
+ if(installmentLabel&&interestLabel){
+  const details=document.createElement('details');details.id='ux04-plan-details';details.className='ux04-plan-details';
+  const summary=document.createElement('summary');summary.textContent='＋ Parcelamento e juros (opcional)';
+  const content=document.createElement('div');content.className='ux04-plan-fields';details.append(summary,content);
+  installmentLabel.before(details);content.append(installmentLabel);
+  const fast=document.createElement('div');fast.className='ux04-fast-installments';fast.setAttribute('role','group');fast.setAttribute('aria-label','Parcelamento rápido');
+  fast.innerHTML='<span>Parcelas rápidas:</span>'+[1,2,3,6,10,12].map(n=>`<button type="button" data-ux04-installments="${n}" aria-pressed="${n===1}">${n}×</button>`).join('');
+  content.append(fast,interestLabel);
+  fast.addEventListener('click',ev=>{const button=ev.target.closest('[data-ux04-installments]');if(!button)return;installments.value=button.dataset.ux04Installments;installments.dispatchEvent(new Event('input',{bubbles:true}));});
+  installments.addEventListener('input',()=>{for(const b of $$('[data-ux04-installments]',fast))b.setAttribute('aria-pressed',String(b.dataset.ux04Installments===installments.value));});
+ }
+ type?.addEventListener('change',()=>{uxPaymentTypeControls();uxPaymentMethodChoices();if(type.value==='income'){form.elements.installments.value='1';form.elements.interest.value='0';form.elements.installments.dispatchEvent(new Event('input',{bubbles:true}));}refreshSources();});
+ method.addEventListener('change',()=>{refreshSources();if(method.value==='credit'&&!select.value&&!form.elements.edit_id?.value){form.elements.status.value='pending';}});select.addEventListener('change',syncSource);
+ // Importante: mesmo sem cartão/conta cadastrada, nunca bloquear um lançamento manual.
+ // O fluxo de crédito COM cartão cadastrado não cria transação: cria compra na fatura.
+ document.addEventListener('submit',ev=>{
+  if(ev.target!==form)return;
+  const value=method.value;const edit=!!form.elements.edit_id?.value;
+  if(!value){ev.preventDefault();ev.stopImmediatePropagation();notify('Escolha como recebeu ou pagou: Pix, débito, dinheiro ou outra forma.',true);method.focus();return;}
+  if(value==='benefit'&&!select.value){ev.preventDefault();ev.stopImmediatePropagation();notify('Para registrar crédito de benefício, selecione uma carteira VR/VA ou cadastre-a em Cartões e benefícios.',true);return;}
+  if(value==='credit'&&select.value.startsWith('card:')){
+   ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();saveCreditPurchase(form,select.value.slice(5));return;
+  }
+  const note=form.elements.note;const clean=uxPaymentCleanNote(note.value);
+  const tag='[Forma: '+UX_METHOD_DESCRIPTIONS[value]+']';
+  const stored=tag+(clean?' '+clean:'');
+  if(stored.length>300){ev.preventDefault();ev.stopImmediatePropagation();notify('Observação muito longa. Reduza o texto para salvar a forma de pagamento.',true);return;}
+  note.value=stored;
+ },true);
+ // Se um registro antigo for editado, sincronizar a interface com seu tipo real.
+ document.addEventListener('click',ev=>{
+  const edit=ev.target.closest('[data-action="edit"][data-table="transactions"]');const cancel=ev.target.closest('.cancel-edit[data-form="transaction-form"]');
+  if(!edit&&!cancel)return;
+  setTimeout(()=>{
+   const f=$('#transaction-form');if(!f)return;const raw=f.elements.note?.value||'';
+   const existing=uxPaymentExistingMethod(raw);if(existing)f.elements.note.value=uxPaymentCleanNote(raw);
+   const account=f.elements.account_id?.value||'';
+   uxPaymentTypeControls();uxPaymentMethodChoices(existing||(edit?'other':''));refreshSources();
+   if(account&&[...select.options].some(x=>x.value==='account:'+account))select.value='account:'+account;
+   if(edit){$('#ux04-plan-details').open=false;}
+   syncSource();
+  },0);
+ },true);
+ uxPaymentTypeControls();uxPaymentMethodChoices();refreshSources();
+}
 async function loadSources(force=false){
  const b=bridge();if(!b?.user?.id||!b.db)return;
  if(busy)return;if(!force&&Date.now()-lastRefresh<2500)return;
  busy=true;try{
   const uid=b.user.id;
   const [a,c]=await Promise.all([
-   b.db.from('scd_accounts').select('id,name,institution,active').eq('user_id',uid),
+   b.db.from('scd_accounts').select('id,name,institution,kind,active').eq('user_id',uid),
    b.db.from('scd_cards').select('id,name,institution,active').eq('user_id',uid)
   ]);
   if(a.error)throw a.error;if(c.error)throw c.error;
   accounts=(a.data||[]).filter(x=>x.active!==false);cards=(c.data||[]).filter(x=>x.active!==false);lastRefresh=Date.now();refreshSources();
  }catch(error){notify(window.SCD_USER_ERROR?.(error)||'Não foi possível carregar contas e cartões.',true)}finally{busy=false}
 }
+/* HISTÓRICO: seletor misto anterior preservado, não executado.
 function refreshSources(){
  const select=$('#ux04-source');const f=$('#transaction-form');if(!select||!f)return;
  const last=select.value,kind=f.elements.type?.value||'expense';
@@ -170,11 +262,66 @@ function refreshSources(){
 function syncSource(){
  const select=$('#ux04-source');const f=$('#transaction-form');const old=$('#bi-tx-account');if(!select||!f||!old)return;
  const isCard=select.value.startsWith('card:');const account=select.value.startsWith('account:')?select.value.slice(8):'';
+ if(account&&![...old.options].some(o=>o.value===account))old.append(new Option('',account));
  old.value=account;old.dispatchEvent(new Event('change',{bubbles:false}));
  const status=f.elements.status?.closest('label');if(status)status.classList.toggle('ux04-credit-status',isCard);
  const hint=$('#ux04-source-hint');if(hint)hint.textContent=isCard?'Compra no crédito: o valor será dividido nas faturas. A conta bancária só é movimentada ao pagar a fatura.':'Pix, débito, dinheiro e receitas ajustam o saldo da conta quando marcados como realizados.';
  const interest=f.elements.interest?.closest('label');if(interest){interest.classList.remove('ux04-credit-interest');interest.querySelector('.ux07-interest-hint')?.remove();const hint=document.createElement('small');hint.className='ux07-interest-hint';hint.textContent=isCard?'Opcional · informe a porcentagem total de juros sobre a compra. Sem juros? Deixe 0.':'Opcional · porcentagem total de juros da compra.';interest.append(hint)}
  try{const uid=bridge()?.user?.id;if(uid&&select.value)localStorage.setItem('scd-ux04-source-'+uid,select.value)}catch{}
+}
+FIM HISTÓRICO */
+function refreshSources(){
+ const select=$('#ux04-source'),f=$('#transaction-form'),method=$('#ux04-method');if(!select||!f||!method)return;
+ const keep=select.value,choice=method.value,kind=f.elements.type.value;
+ const label=$('.ux04-source-field',f),methodLabel=$('.ux04-method-field',f);
+ if(methodLabel)methodLabel.firstChild.textContent=kind==='income'?'1. Como recebeu?':'1. Como pagou?';
+ if(label)label.hidden=!choice;
+ const preview=$('#ux04-payment-preview');if(!choice){select.replaceChildren(new Option('Escolha a forma primeiro',''));if(preview)preview.textContent='Escolha a forma de pagamento ou recebimento para continuar.';syncSource();return;}
+ const list=[];
+ if(choice==='credit'&&kind==='expense'){
+  list.push(...cards.map(c=>({id:'card:'+c.id,label:'💳 '+c.name+(c.institution?' · '+c.institution:'')})));
+ }else if(choice==='vr'||choice==='va'||choice==='benefit'){
+  list.push(...accounts.filter(a=>uxPaymentIsBenefit(a)&&(choice==='benefit'||a.institution.toLowerCase()===choice)).map(a=>({id:'account:'+a.id,label:'🎫 '+a.name+' · '+a.institution})));
+ }else if(choice==='money'){
+  list.push(...accounts.filter(a=>!uxPaymentIsBenefit(a)&&(a.kind==='cash'||a.kind==='wallet')).map(a=>({id:'account:'+a.id,label:'💵 '+a.name})));
+ }else{
+  list.push(...accounts.filter(a=>!uxPaymentIsBenefit(a)).map(a=>({id:'account:'+a.id,label:'🏦 '+a.name+(a.institution?' · '+a.institution:'')})));
+ }
+ const empty=choice==='credit'?'Sem cartão cadastrado · não gera fatura':'Sem vincular · não altera saldo de conta';
+ select.replaceChildren(new Option(empty,''),...list.map(x=>new Option(x.label,x.id)));
+ if(keep&&list.some(x=>x.id===keep))select.value=keep;
+ const sourceLabel=label?.childNodes[0];if(sourceLabel?.nodeType===Node.TEXT_NODE)sourceLabel.textContent=choice==='credit'?'2. Qual cartão de crédito?':(choice==='vr'||choice==='va'||choice==='benefit'?'2. Qual carteira de benefício?':kind==='income'?'2. Em qual conta entrou?':'2. De qual conta saiu?');
+ syncSource();
+}
+function syncSource(){
+ const select=$('#ux04-source'),f=$('#transaction-form'),old=$('#bi-tx-account'),method=$('#ux04-method');if(!select||!f||!old||!method)return;
+ const value=method.value,kind=f.elements.type.value;
+ const isCard=value==='credit'&&select.value.startsWith('card:');
+ const account=select.value.startsWith('account:')?select.value.slice(8):'';
+ if(account&&![...old.options].some(o=>o.value===account))old.append(new Option('',account));
+ old.value=account; // Campo legado oculto, consumido pela função financeira original.
+ const status=f.elements.status?.closest('label');if(status)status.classList.toggle('ux04-credit-status',isCard);
+ const plans=$('#ux04-plan-details');if(plans)plans.hidden=kind==='income';
+ const hint=$('#ux04-source-hint'),preview=$('#ux04-payment-preview');
+ const withoutAccount=!select.value;
+ const messages={
+  pix:'Pix é a forma de transferência. A conta é o local onde o saldo será atualizado.',
+  debit:'Débito desconta da conta vinculada quando o lançamento for realizado.',
+  money:'Dinheiro pode ser registrado sem conta ou vinculado a uma carteira de dinheiro.',
+  credit:isCard?'A compra entra na fatura do cartão, sem débito bancário imediato. Não cria lançamento duplicado.':'Sem cartão cadastrado: registro manual pendente, sem geração de fatura ou limite. Marque como pago somente quando quitar.',
+  vr:'VR é benefício de refeição. Não é cartão de crédito nem dinheiro livre.',
+  va:'VA é benefício de alimentação. Não entra no saldo livre das contas.',
+  benefit:'Crédito de benefício fica separado do saldo bancário geral.',
+  transfer:'Transferência externa informada manualmente. Entre duas contas SUAS, use Transferir em Contas para não contar receita ou despesa.',
+  other:'Registre como outra forma, com ou sem conta vinculada.',
+  boleto:'Boleto pago pode ser vinculado à conta de onde saiu o valor.',
+  deposit:'Depósito pode ser vinculado à conta que recebeu o dinheiro.'
+ };
+ if(hint)hint.textContent=value?messages[value]||'': 'Escolha primeiro a forma de recebimento ou pagamento.';
+ if(preview)preview.textContent=!value?'Escolha como recebeu ou pagou para continuar.':isCard?'💳 Vai para a fatura do cartão selecionado; o saldo bancário só muda ao pagar a fatura.':value==='credit'&&withoutAccount?'⚠ Crédito sem cartão cadastrado: lança manualmente como pendente, mas não cria fatura. Confirme o pagamento depois.':value==='benefit'&&withoutAccount?'⚠ Cadastre uma carteira de benefício antes de registrar um crédito VR/VA.':withoutAccount?'✦ Sem vínculo: o valor entra no histórico geral, mas não muda o saldo de uma conta específica.':'✓ Conta vinculada: o valor realizado será considerado no saldo dessa conta.';
+ const button=f.querySelector('button[type="submit"]');if(button)button.textContent=isCard?'Registrar compra no cartão':'Salvar lançamento';
+ if(!isCard){const interest=f.elements.interest?.closest('label');const h=interest?.querySelector('.ux07-interest-hint');if(h)h.textContent='Opcional · percentual total de juros sobre o valor informado.';}
+ try{const u=bridge()?.user?.id;if(u&&value)localStorage.setItem('scd-ux04-method-'+u,value)}catch{}
 }
 async function saveCreditPurchase(form,cardId){
  const b=bridge();if(!b?.user||!b.db){notify('Entre na sua conta para registrar.',true);return}

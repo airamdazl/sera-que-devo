@@ -415,5 +415,8 @@ async function checkoutV2(){const items=B()?.state?.market_items||[],chosen=item
  const selected=$('#bi-account-select')?.value||null;if(!selected)return info('Selecione a conta usada no mercado. Se não tiver uma, cadastre em Contas e Bancos.',true);if(selected)remember('account',selected);
  await action(()=>db().rpc('scd_checkout_market_v2',{p_ids:chosen.map(x=>x.id),p_date:day(),p_account_id:selected,p_request_key:crypto.randomUUID(),p_store:storeName}),'Compra registrada com itens e total.');}
 window.SCD_BI20={renderPandora,renderBI,fetchExtra,renderExtras,paintHolidays,balances,cardInvoiceRows};
+/* Histórico UX12 (preservado em comentário):
 window.addEventListener('load',()=>{setup();if(uid()){fetchExtra().then(()=>{renderAccountDropdowns();applyPreferences()});updateMaint()}});
+*/
+window.addEventListener('load',()=>{setup();if(uid() && window.SCD_ONBOARDING_COMPLETE===true){fetchExtra().then(()=>{renderAccountDropdowns();applyPreferences()});updateMaint()}});
 })();

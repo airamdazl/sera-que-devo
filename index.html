@@ -113,7 +113,18 @@
 #scd-recovery-feedback{min-height:24px;font-size:.88rem;color:var(--text);font-weight:600}
 #scd-recovery-strength,#scd-recovery-match{font-size:.78rem;color:var(--muted)}
 #scd-resend-confirmation{font-size:.78rem;min-height:32px}
+/* UX13: links jurídicos no checkbox durante cadastro, no rodapé somente no login. */
+#auth-screen[data-auth-mode="signup"] .auth-legal{display:none!important}
+#auth-form #reset-password[hidden],#auth-form #scd-resend-confirmation[hidden]{display:none!important}
+.scd-age-gate{width:min(92vw,475px);max-height:90dvh;overflow-y:auto;padding:25px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--text);box-shadow:0 18px 76px #0007}
+.scd-age-gate::backdrop{background:rgba(7,9,20,.89)}
+.scd-age-gate h2{font-size:1.45rem;margin:0 0 10px}
+.scd-age-gate .scd-age-actions{display:grid;gap:10px;margin-top:18px}
+.scd-age-gate .scd-age-error{min-height:24px;color:var(--bad);font-size:.86rem;font-weight:650}
+.scd-age-gate .scd-age-help{color:var(--muted);font-size:.84rem;line-height:1.5}
+@media(max-width:750px){.scd-age-gate{padding:18px}}
 </style>
+<!-- UX13: regularização de nascimento, aceite jurídico e simplificação de login. -->
 </head>
 <body>
 <a href="#main" class="skip">Ir ao conteúdo</a>
@@ -123,7 +134,9 @@
  <div class="auth-art"><div class="auth-art-content"><span class="eyebrow">SERÁ QUE DEVO? · PRO</span><div class="art-orbit"><span>✦</span></div><h1>Você no comando.<br><em>Seu dinheiro também.</em></h1><p>Planeje, organize e acompanhe seus sonhos — com uma ajudinha bem-humorada da Pandora.</p><div class="art-chips"><span>✦ Análise financeira</span><span>✦ Metas e calendário</span><span>✦ Calculadoras</span></div></div></div>
  <div class="auth-form-pane"><div class="auth-card"><div class="brand brand-auth" aria-label="Marca do sistema"><img class="auth-brand-logo" src="./logo.png" alt="Será Que Devo?"></div><span class="eyebrow">BEM-VINDO</span><h2 id="auth-heading">Entre na sua conta</h2><p class="muted">Dados privados, organizados em um lugar só.</p>
  <div class="segmented" aria-label="Tipo de acesso"><button type="button" data-auth-mode="login" class="selected">Entrar</button><button type="button" data-auth-mode="signup">Criar conta</button></div>
- <form id="auth-form" class="stack" autocomplete="on"><label class="signup-only" hidden>Seu nome<input name="displayName" maxlength="80" autocomplete="name"></label><label class="signup-only" hidden>Data de nascimento<input type="date" name="birthday" autocomplete="bday" aria-describedby="signup-age-note"><small id="signup-age-note" class="fine">Cadastro para pessoas a partir de 16 anos. Se você tem 16 ou 17, use com orientação de um responsável para decisões financeiras importantes. Esta data também pode permitir mensagens de aniversário.</small></label><label>E-mail<input type="email" name="email" maxlength="254" autocomplete="email" required></label><label>Senha<input type="password" name="password" minlength="8" maxlength="128" autocomplete="current-password" required></label><label class="checkline signup-only" hidden><input type="checkbox" id="terms-accept"> <span>Li e aceito os <button class="text-link" type="button" data-legal="terms">Termos de Uso</button> e declaro ciência da <button class="text-link" type="button" data-legal="privacy">Política de Privacidade</button> (versão 16/11/2026). Sei que o app não consulta bancos, usa registros informados manualmente e exige cuidado com minha senha e sessão.</span></label><button id="auth-submit" class="btn primary" type="submit">Entrar</button><button id="reset-password" type="button" class="text-link">Esqueci minha senha</button><button id="scd-resend-confirmation" type="button" class="text-link">Reenviar e-mail de confirmação</button></form>
+ <form id="auth-form" class="stack" autocomplete="on"><label class="signup-only" hidden>Seu nome<input name="displayName" maxlength="80" autocomplete="name"></label><label class="signup-only" hidden>Data de nascimento<input type="date" name="birthday" autocomplete="bday" aria-describedby="signup-age-note"><small id="signup-age-note" class="fine">Cadastro para pessoas a partir de 16 anos. Se você tem 16 ou 17, use com orientação de um responsável para decisões financeiras importantes. Esta data também pode permitir mensagens de aniversário.</small></label><label>E-mail<input type="email" name="email" maxlength="254" autocomplete="email" required></label><label>Senha<input type="password" name="password" minlength="8" maxlength="128" autocomplete="current-password" required></label><label class="checkline signup-only" hidden><input type="checkbox" id="terms-accept"> <!-- UX12 original preservado para histórico:
+<span>Li e aceito os <button class="text-link" type="button" data-legal="terms">Termos de Uso</button> e declaro ciência da <button class="text-link" type="button" data-legal="privacy">Política de Privacidade</button> (versão 16/11/2026). Sei que o app não consulta bancos, usa registros informados manualmente e exige cuidado com minha senha e sessão.</span>
+--><span>Li e aceito os <button class="text-link" type="button" data-legal="terms">Termos de Uso</button> e li a <button class="text-link" type="button" data-legal="privacy">Política de Privacidade</button> (versão 16/11/2026).</span></label><button id="auth-submit" class="btn primary" type="submit">Entrar</button><button id="reset-password" type="button" class="text-link">Esqueci minha senha</button><button id="scd-resend-confirmation" type="button" class="text-link">Reenviar e-mail de confirmação</button></form>
  <p id="auth-message" class="notice" aria-live="polite"></p><p class="fine">Painel pessoal de dados autodeclarados. Não conecta bancos, não solicita senhas bancárias e não oferece crédito.</p><div class="auth-legal"><button type="button" class="text-link" data-legal="terms">Termos de uso</button><button type="button" class="text-link" data-legal="privacy">Política de privacidade</button></div></div></div>
 </section>
 <div id="app" class="app" hidden>
@@ -161,7 +174,7 @@
  <article class="panel full"><h3>Antes de contratar empréstimos</h3><p>Compare o custo efetivo total (CET), taxas mensais e anuais, seguros, multas e o impacto da parcela no orçamento. Empréstimos consignados podem ter desconto em folha e consequências específicas na rescisão. Evite usar taxas médias antigas como se fossem ofertas atuais.</p><p class="fine">Referências: <a href="https://www.bcb.gov.br/cidadaniafinanceira" target="_blank" rel="noopener noreferrer">Banco Central</a> e <a href="https://www.gov.br/trabalho-e-emprego/pt-br" target="_blank" rel="noopener noreferrer">Ministério do Trabalho</a>.</p></article>
  </div></section>
  <section class="view" id="view-reports"><div class="view-intro"><h2>Relatórios e exportação</h2><p>Baixe o histórico em CSV, relatórios em PDF ou um backup pessoal completo em JSON.</p></div><article class="panel"><div class="filters"><label>Mês<input id="report-month" type="month"></label><label>Situação<select id="report-status"><option value="all">Realizado + previsto</option><option value="paid">Só realizado</option><option value="pending">Só pendente</option></select></label></div><div class="form-actions"><button id="export-csv" type="button" class="btn primary">Exportar CSV</button><button id="export-pdf" type="button" class="btn ghost">Relatório PDF</button><button id="export-json" type="button" class="btn ghost">Backup JSON</button></div><p class="fine">Arquivos exportados contêm dados financeiros sensíveis. Armazene em local seguro. CSV protege contra fórmulas maliciosas.</p></article></section>
- <section class="view" id="view-profile"><div class="view-intro"><h2>Conta e privacidade</h2><p>Personalize seu perfil e controle o acesso aos seus dados.</p></div><form id="profile-form" class="panel form-grid"><label>Nome de exibição<input name="display_name" maxlength="80" required></label><label>Data de aniversário (opcional)<input name="birthday" type="date"></label><div class="full"><button class="btn primary" type="submit">Salvar perfil</button></div></form><article class="panel"><h3>Segurança</h3><p>O aplicativo usa autenticação do Supabase e consultas delimitadas ao usuário. O isolamento real depende das políticas RLS instaladas no banco.</p><div class="form-actions"><button id="change-password" type="button" class="btn ghost">Alterar minha senha</button><button id="delete-account" type="button" class="btn danger">Excluir minha conta e dados</button></div><p class="fine">Exclusão definitiva requer a Edge Function segura descrita no guia de implantação. Se não estiver configurada, o aplicativo não declara a conta excluída.</p></article><article class="panel"><h3>Transparência</h3><p>Não acessamos suas contas bancárias. Seus registros financeiros são armazenados no Supabase e usados para organizar as informações que você adiciona. A Pandora é uma assistente local, baseada em regras — não envia seu histórico para um modelo de IA.</p><div class="form-actions"><button class="btn ghost" type="button" data-legal="privacy">Política de privacidade</button><button class="btn ghost" type="button" data-legal="terms">Termos de uso</button></div></article></section>
+ <section class="view" id="view-profile"><div class="view-intro"><h2>Conta e privacidade</h2><p>Personalize seu perfil e controle o acesso aos seus dados.</p></div><form id="profile-form" class="panel form-grid"><label>Nome de exibição<input name="display_name" maxlength="80" required></label><!-- UX12: <label>Data de aniversário (opcional)<input name="birthday" type="date"></label> --><label>Data de nascimento<input name="birthday" type="date" autocomplete="bday" required><small class="fine">Usada para confirmar a faixa etária declarada e, se desejar, receber a mensagem de aniversário.</small></label><div class="full"><button class="btn primary" type="submit">Salvar perfil</button></div></form><article class="panel"><h3>Segurança</h3><p>O aplicativo usa autenticação do Supabase e consultas delimitadas ao usuário. O isolamento real depende das políticas RLS instaladas no banco.</p><div class="form-actions"><button id="change-password" type="button" class="btn ghost">Alterar minha senha</button><button id="delete-account" type="button" class="btn danger">Excluir minha conta e dados</button></div><p class="fine">Exclusão definitiva requer a Edge Function segura descrita no guia de implantação. Se não estiver configurada, o aplicativo não declara a conta excluída.</p></article><article class="panel"><h3>Transparência</h3><p>Não acessamos suas contas bancárias. Seus registros financeiros são armazenados no Supabase e usados para organizar as informações que você adiciona. A Pandora é uma assistente local, baseada em regras — não envia seu histórico para um modelo de IA.</p><div class="form-actions"><button class="btn ghost" type="button" data-legal="privacy">Política de privacidade</button><button class="btn ghost" type="button" data-legal="terms">Termos de uso</button></div></article></section>
  <footer class="footer">Será Que Devo? · Pro <span>Organização pessoal e simulações informativas · 2026</span></footer>
  </main>
  <nav id="bottom-nav" class="bottom-nav" aria-label="Acesso rápido no celular"><button data-view="dashboard" class="active">▦<span>Painel</span></button><button data-view="transactions">⇅<span>Lançar</span></button><button data-view="market">🛒<span>Mercado</span></button><button data-view="calendar">▣<span>Agenda</span></button><button data-view="profile">⚙<span>Conta</span></button></nav>
@@ -169,6 +182,16 @@
  <button id="pandora-fab" class="pandora-fab" type="button" aria-label="Conversar com Pandora" aria-controls="pandora-panel" aria-expanded="false"><span class="pandora-avatar pandora-portrait" aria-hidden="true"><img class="pandora-face" alt="" hidden><img class="pandora-face" alt="" hidden><span class="pandora-face-fallback">✦</span></span><span class="online-dot" aria-hidden="true"></span></button><aside id="pandora-panel" class="pandora-chat" aria-label="Conselhos da Pandora" hidden><div class="pandora-chat-head"><div class="pandora-head-identity"><span class="pandora-head-avatar pandora-portrait" aria-hidden="true"><img class="pandora-face" alt="" hidden><img class="pandora-face" alt="" hidden><span class="pandora-face-fallback">✦</span></span><span class="pandora-head-copy"><strong>Pandora</strong><small>Sua amiga financeira nada imparcial</small></span></div><button id="pandora-close" class="icon-btn" aria-label="Fechar Pandora" type="button">×</button></div><div class="pandora-chat-body"><div id="pandora-mood" class="mood-tag">Modo: observadora</div><p id="pandora-message">Me chama quando precisar de um olhar sobre seu orçamento.</p><div id="pandora-suggestions" class="pandora-suggestions"></div></div><div class="pandora-chat-foot"><button id="pandora-new" class="btn ghost" type="button">Outra reação</button><button data-goto="transactions" class="btn primary" type="button">Novo lançamento</button></div></aside>
 </div>
 
+<dialog id="scd-age-gate" class="modal scd-age-gate" aria-labelledby="scd-age-title" aria-modal="true">
+ <h2 id="scd-age-title">Só falta confirmar sua idade</h2>
+ <p class="scd-age-help">Para proteger sua conta e respeitar as regras de uso, confirme sua data de nascimento. Seus lançamentos e demais dados continuam preservados.</p>
+ <form id="scd-age-form">
+  <label>Data de nascimento<input id="scd-age-birthday" name="birthday" type="date" autocomplete="bday" required></label>
+  <p class="scd-age-help">O Será Que Devo? é destinado a pessoas com 16 anos ou mais. Esta informação ficará no seu perfil privado.</p>
+  <p class="scd-age-error" id="scd-age-error" role="alert" aria-live="polite"></p>
+  <div class="scd-age-actions"><button type="submit" id="scd-age-confirm" class="btn primary">Salvar e continuar</button><button type="button" id="scd-age-logout" class="btn ghost">Sair da conta</button></div>
+ </form>
+</dialog>
 <dialog id="scd-legal-gate" class="modal scd-legal-gate" aria-labelledby="scd-gate-title" aria-modal="true"><div class="modal-top"><h2 id="scd-gate-title">Antes de entrar no seu painel</h2></div><p class="fine">Atualizamos os documentos de uso e privacidade. Seus dados já existentes permanecem na sua conta.</p><div class="scd-gate-links"><button type="button" class="text-link" data-legal="terms">Ler Termos de Uso</button><button type="button" class="text-link" data-legal="privacy">Ler Política de Privacidade</button></div><label class="checkline"><input type="checkbox" id="scd-gate-accept"><span>Li e aceito os Termos de Uso e declaro ciência da Política de Privacidade, versão 16/11/2026.</span></label><p class="notice" id="scd-gate-error" role="alert" aria-live="polite"></p><button type="button" id="scd-gate-confirm" class="btn primary">Confirmar e abrir meu painel</button><button type="button" id="scd-gate-logout" class="btn ghost">Sair da conta</button></dialog>
 <dialog id="legal-dialog" class="modal"><div class="modal-top"><h2 id="legal-title">Termos de uso</h2><button type="button" class="icon-btn" data-close-dialog aria-label="Fechar">×</button></div><div id="legal-content" class="modal-body"></div><button type="button" data-close-dialog class="btn primary">Entendi</button></dialog>
 <dialog id="scd-recovery-dialog" aria-labelledby="scd-recovery-title" aria-modal="true">
@@ -296,8 +319,25 @@ function validateDate(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||'')||localDate(new Da
 function safeActionButton(label,act,table,id,extra=''){return `<button class="mini-btn ${extra}" type="button" data-action="${act}" data-table="${table}" data-id="${id}">${label}</button>`}
 let mutationBusy=false;let db=null,user=null,profile=null,state=Object.fromEntries(TABLES.map(t=>[t,[]]));let authMode='login',activeView='dashboard',calendarCursor=new Date(),selectedDay=today(),selectedPandora='welcome',pandoraIndex=0,starting=false;
 function setTheme(theme,announce=false){const v=theme==='dark'?'dark':'light';document.documentElement.dataset.theme=v;try{localStorage.setItem('sqd-theme',v)}catch{};document.querySelector('meta[name=theme-color]').content=v==='dark'?'#0d111c':'#f6f7fb';if(announce)tellPandora('theme')}
+/* Histórico UX12 — função original mantida sem execução:
 function switchAuthMode(v){authMode=v==='signup'?'signup':'login';$$('[data-auth-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.authMode===authMode));$$('.signup-only').forEach(e=>e.hidden=authMode!=='signup');$('#auth-heading').textContent=authMode==='signup'?'Comece a se organizar':'Entre na sua conta';$('#auth-submit').textContent=authMode==='signup'?'Criar conta':'Entrar';$('#auth-form').elements.password.autocomplete=authMode==='signup'?'new-password':'current-password';$('#auth-message').textContent=''}
+*/
+function switchAuthMode(v){
+ authMode=v==='signup'?'signup':'login';
+ $$('[data-auth-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.authMode===authMode));
+ $$('.signup-only').forEach(e=>e.hidden=authMode!=='signup');
+ $('#auth-heading').textContent=authMode==='signup'?'Comece a se organizar':'Entre na sua conta';
+ $('#auth-submit').textContent=authMode==='signup'?'Criar conta':'Entrar';
+ $('#auth-form').elements.password.autocomplete=authMode==='signup'?'new-password':'current-password';
+ $('#auth-screen').dataset.authMode=authMode;
+ $('#reset-password').hidden=authMode==='signup';
+ $('#scd-resend-confirmation').hidden=authMode==='signup';
+ $('#auth-message').textContent='';
+}
+/* Histórico UX12 — showLoggedOut original:
 function showLoggedOut(){const gate=document.getElementById('scd-legal-gate');if(gate?.open)gate.close();user=null;profile=null;state=Object.fromEntries(TABLES.map(t=>[t,[]]));$('#app').hidden=true;$('#auth-screen').hidden=false;$('#pandora-panel').hidden=true;$('#app-banner').hidden=true;const dataStatus=$('#scd-load-status');if(dataStatus)dataStatus.hidden=true}
+*/
+function showLoggedOut(){window.SCD_ONBOARDING_COMPLETE=false;const ageGate=document.getElementById('scd-age-gate');if(ageGate?.open)ageGate.close();const gate=document.getElementById('scd-legal-gate');if(gate?.open)gate.close();user=null;profile=null;state=Object.fromEntries(TABLES.map(t=>[t,[]]));$('#app').hidden=true;$('#auth-screen').hidden=false;$('#pandora-panel').hidden=true;$('#app-banner').hidden=true;const dataStatus=$('#scd-load-status');if(dataStatus)dataStatus.hidden=true}
 function showLoggedIn(){if(!user)return;$('#auth-screen').hidden=true;$('#app').hidden=false;const name=profile?.display_name||user.user_metadata?.display_name||user.email?.split('@')[0]||'Pessoa';$('#profile-name').textContent=name;$('#profile-email').textContent=user.email||'';$('#avatar').textContent=(name[0]||'?').toUpperCase();const greeting=$('#hello');if(greeting)greeting.textContent=`Olá, ${name.split(' ')[0]}!`;else console.warn('[SCD] Cabeçalho visual ausente; login e dados seguem disponíveis.');const f=$('#profile-form');f.elements.display_name.value=name;f.elements.birthday.value=profile?.birthday||'';let token=`sqd-bday-${user.id}-${today()}`;if((profile?.birthday||'').slice(5)===today().slice(5)){let shown=false;try{shown=sessionStorage.getItem(token)==='1'}catch{};if(!shown){$('#birthday-text').textContent=`${name}, a Pandora deseja um novo ciclo cheio de conquistas e boas escolhas!`;$('#birthday-dialog').showModal();try{sessionStorage.setItem(token,'1')}catch{};tellPandora('birthday')}}}
 function banner(msg){const el=$('#app-banner');el.hidden=!msg;el.textContent=msg||''}
 async function requireSession(){if(!db)throw Error('Biblioteca Supabase não carregou. Verifique a conexão e o bloqueio de scripts.');const {data,error}=await db.auth.getUser();if(error||!data?.user)throw Error('Sua sessão expirou. Entre novamente.');user=data.user;return user}
@@ -369,11 +409,21 @@ async function confirmCurrentLegalAcceptance(){
  });
 }
 // Sincroniza aniversario do cadastro depois que o e-mail foi confirmado e a sessao existe.
+/* Histórico UX12 — sincronização original:
 async function syncSignupBirthday(){
  const birthday=user?.user_metadata?.birthday;if(!birthday||profile?.birthday)return;
  if(!/^\d{4}-\d{2}-\d{2}$/.test(birthday))return;
  const res=await db.from('profiles').update({birthday}).eq('id',user.id);
  if(res.error){console.warn('[SCD] Não foi possível sincronizar aniversário do cadastro. O usuário poderá alterá-lo no perfil.');return}
+ profile.birthday=birthday;
+}
+*/
+async function syncSignupBirthday(){
+ const birthday=user?.user_metadata?.birthday;
+ if(!birthday||profile?.birthday)return;
+ try{validateSignupAge(birthday)}catch{return}
+ const res=await db.from('profiles').update({birthday}).eq('id',user.id);
+ if(res.error){console.warn('[SCD] Nascimento ainda não sincronizado; o fluxo de regularização continuará disponível.');return}
  profile.birthday=birthday;
 }
 function validateSignupAge(birthday){
@@ -384,6 +434,45 @@ function validateSignupAge(birthday){
  if(age<16)throw Error('O cadastro está disponível a partir dos 16 anos. Para dúvidas, fale com o suporte.');
  if(age>120)throw Error('Confira a data de nascimento informada.');
 }
+// UX13: regularização de perfil anterior ao carregamento de qualquer dado financeiro.
+// Não preenche nascimento automaticamente nem altera dados de terceiros.
+async function requireBirthdayForAccess(){
+ if(!user?.id)throw Error('Sessão necessária para regularizar o perfil.');
+ try{validateSignupAge(profile?.birthday);return}catch(e){
+   // Data ausente ou inválida: exigir conferência humana; sem acesso ao dashboard.
+ }
+ $('#app').hidden=true;$('#auth-screen').hidden=false;
+ const gate=$('#scd-age-gate'),form=$('#scd-age-form'),entry=$('#scd-age-birthday');
+ const error=$('#scd-age-error'),submit=$('#scd-age-confirm'),leave=$('#scd-age-logout');
+ entry.value=profile?.birthday||'';
+ error.textContent='';submit.disabled=false;
+ await new Promise((resolve,reject)=>{
+  const clean=()=>{form.removeEventListener('submit',save);leave.removeEventListener('click',exit);gate.removeEventListener('cancel',prevent)};
+  const prevent=e=>e.preventDefault();
+  const exit=async()=>{clean();gate.close();await db.auth.signOut({scope:'local'}).catch(()=>{});showLoggedOut();reject(new Error('A regularização foi interrompida.'))};
+  const save=async e=>{
+   e.preventDefault();
+   try{validateSignupAge(entry.value)}catch(e){error.textContent=e.message;return}
+   submit.disabled=true;error.textContent='';
+   try{
+    const result=await db.from('profiles').update({birthday:entry.value}).eq('id',user.id).select('birthday').single();
+    if(result.error)throw result.error;
+    if(result.data?.birthday!==entry.value)throw Error('Não foi possível confirmar a data salva.');
+    profile.birthday=result.data.birthday;
+    clean();gate.close();resolve();
+   }catch(e){
+    error.textContent=(e?.code==='P0001'||/manuten/i.test(String(e?.message)))?
+      'O aplicativo está em manutenção. Seu perfil não foi alterado. Volte após a liberação ou fale com o suporte.':
+      'Não foi possível salvar a data no servidor. Verifique a conexão e tente novamente.';
+    submit.disabled=false;
+   }
+  };
+  form.addEventListener('submit',save);leave.addEventListener('click',exit);
+  gate.addEventListener('cancel',prevent);
+  gate.showModal();
+ });
+}
+/* Histórico UX12 — ativação original mantida para comparação:
 async function activateSession(u){
  if(!u?.id)throw Error('Não foi possível validar sua sessão. Entre novamente.');
  if(user?.id!==u.id)state=Object.fromEntries(TABLES.map(t=>[t,[]]));
@@ -391,6 +480,24 @@ async function activateSession(u){
  await loadProfile();
  await confirmCurrentLegalAcceptance();
  await syncSignupBirthday();
+ showLoggedIn();
+ scdDataStatus({failed:[]});
+ await fetchAll();
+ navigate((location.hash||'#dashboard').slice(1),false);
+ if(!history.state?.scdGuard)history.pushState({scdView:activeView,scdGuard:true},'',location.href);
+ window.dispatchEvent(new Event('scd-auth-ready'));
+}
+*/
+async function activateSession(u){
+ if(!u?.id)throw Error('Não foi possível validar sua sessão. Entre novamente.');
+ window.SCD_ONBOARDING_COMPLETE=false;
+ if(user?.id!==u.id)state=Object.fromEntries(TABLES.map(t=>[t,[]]));
+ user=u;
+ await loadProfile();
+ await syncSignupBirthday();
+ await requireBirthdayForAccess();
+ await confirmCurrentLegalAcceptance();
+ window.SCD_ONBOARDING_COMPLETE=true;
  showLoggedIn();
  scdDataStatus({failed:[]});
  await fetchAll();
@@ -538,7 +645,8 @@ $('#auth-form').addEventListener('submit',authSubmit);$$('[data-auth-mode]').for
  $('#transaction-form').addEventListener('submit',submitTransaction);$('#transaction-form').elements.type.addEventListener('change',e=>categoryOptions(e.target.value));['amount','installments','interest'].forEach(n=>$('#transaction-form').elements[n].addEventListener('input',previewInstallments));$('#market-form').addEventListener('submit',e=>submitSimple('market_items',e));$('#note-form').addEventListener('submit',e=>submitSimple('notes',e));$('#goal-form').addEventListener('submit',e=>submitSimple('goals',e));$('#reminder-form').addEventListener('submit',e=>submitSimple('reminders',e));$('#mimo-form').addEventListener('submit',submitMimo);$('#checkout-market').addEventListener('click',checkoutMarket);
  $('#cal-prev').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1,12);renderCalendar()});$('#cal-next').addEventListener('click',()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1,12);renderCalendar()});$('#calendar-grid').addEventListener('click',e=>{const btn=e.target.closest('[data-date]');if(!btn)return;selectedDay=btn.dataset.date;renderCalendar()});$('#calendar-day-details').addEventListener('click',e=>{if(e.target.closest('#day-new-reminder')){navigate('calendar');$('#reminder-form').elements.date.value=selectedDay;$('#reminder-form').scrollIntoView({behavior:'smooth'})}});
  $('#calc-financing').addEventListener('submit',calcFinancing);$('#calc-vacation').addEventListener('submit',calcVacation);$('#calc-termination').addEventListener('submit',calcTermination);$('#calc-mei').addEventListener('submit',calcMei);$('#calc-ir').addEventListener('submit',calcIR);$('#export-csv').addEventListener('click',exportCsv);$('#export-pdf').addEventListener('click',exportPdf);$('#export-json').addEventListener('click',exportJson);$('#market-export').addEventListener('click',marketCsv);$('#market-export-pdf').addEventListener('click',marketPdf);const mForm=$('#market-form');if(mForm){mForm.addEventListener('input',updateMarketItemPreview);mForm.addEventListener('change',updateMarketItemPreview);updateMarketItemPreview();}
- $('#profile-form').addEventListener('submit',async e=>{e.preventDefault();const d=formData(e.currentTarget);try{if(d.birthday)validateDate(d.birthday)}catch(err){toast(err.message,true);return}const ok=await mutate(async()=>{const r=await db.from('profiles').upsert({id:user.id,display_name:d.display_name,birthday:d.birthday||null},{onConflict:'id'});if(r.error)throw r.error;await loadProfile();showLoggedIn()},'Perfil atualizado.');if(ok)renderAll()});
+ /* Histórico UX12: $('#profile-form').addEventListener('submit',async e=>{e.preventDefault();const d=formData(e.currentTarget);try{if(d.birthday)validateDate(d.birthday)}catch(err){toast(err.message,true);return}const ok=await mutate(async()=>{const r=await db.from('profiles').upsert({id:user.id,display_name:d.display_name,birthday:d.birthday||null},{onConflict:'id'});if(r.error)throw r.error;await loadProfile();showLoggedIn()},'Perfil atualizado.');if(ok)renderAll()}); */
+ $('#profile-form').addEventListener('submit',async e=>{e.preventDefault();const d=formData(e.currentTarget);try{validateSignupAge(d.birthday)}catch(err){toast(err.message,true);return}const ok=await mutate(async()=>{const r=await db.from('profiles').upsert({id:user.id,display_name:d.display_name,birthday:d.birthday},{onConflict:'id'});if(r.error)throw r.error;await loadProfile();showLoggedIn()},'Perfil atualizado.');if(ok)renderAll()});
  $('#pandora-fab').addEventListener('click',()=>{const open=$('#pandora-panel').hidden;$('#pandora-panel').hidden=!open;$('#pandora-fab').setAttribute('aria-expanded',String(open));if(open)choosePandoraCategory(selectedPandora)});$('#pandora-close').addEventListener('click',()=>{$('#pandora-panel').hidden=true;$('#pandora-fab').setAttribute('aria-expanded','false')});$('#pandora-new').addEventListener('click',()=>choosePandoraCategory(selectedPandora));$('#pandora-suggestions').addEventListener('click',e=>{const b=e.target.closest('[data-pandora]');if(b)pandoraRequest(b.dataset.pandora)});
  document.addEventListener('click',e=>{const go=e.target.closest('[data-view],[data-goto]');if(go&&user)navigate(go.dataset.view||go.dataset.goto);const legal=e.target.closest('[data-legal]');if(legal)openLegal(legal.dataset.legal);if(e.target.closest('[data-close-dialog]'))e.target.closest('dialog')?.close();const cancel=e.target.closest('.cancel-edit');if(cancel){resetEditor(cancel.dataset.form);$('#transaction-form-title').textContent='Novo lançamento'}const action=e.target.closest('button[data-action][data-id]');if(action)rowAction(action)});
  document.addEventListener('change',e=>{if(e.target.matches('input[data-action="check"]'))rowAction(e.target)});

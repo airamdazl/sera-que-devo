@@ -71,9 +71,139 @@ function renderCards(){const box=$('#bi-cards-list');if(!box)return;box.innerHTM
 function updateInvoicesSelector(){const select=$('#bi-card-pay-form [name="invoice_month"]');if(!select)return;const card=$('#bi-card-pay-select')?.value;const prev=select.value;select.innerHTML='<option value="">Selecionar fatura</option>'+cardInvoiceRows(card).filter(x=>x.total-(x.paid||0)>0.005).map(x=>`<option value="${esc(x.month)}-01">${monthLabel(x.month)} · a pagar ${money(x.total-(x.paid||0))}</option>`).join('');if([...select.options].some(o=>o.value===prev))select.value=prev;}
 function renderRecurring(){const box=$('#bi-recurring-list');if(!box)return;box.innerHTML=store.recurring_rules.length?store.recurring_rules.map(r=>`<article class="bi-item"><div><strong>${esc(r.description)}</strong><small>Todo dia ${r.day_of_month} · ${r.active?'Ativa':'Pausada'}</small></div><b>${money(r.amount)}</b><button class="btn ghost bi-gen" type="button" data-rule="${esc(r.id)}">Gerar 3 vencimentos</button></article>`).join(''):'<p class="muted">Cadastre seus pagamentos e recebimentos mensais.</p>'}
 async function renderMarketHistory(){const box=$('#bi-market-history');if(!box)return;let html='';for(const x of store.market_purchases.slice().sort((a,b)=>String(b.purchase_date).localeCompare(a.purchase_date))){const lines=store.market_purchase_items.filter(i=>i.purchase_id===x.id);
- html+=`<details class="bi-item"><summary><strong>🛒 ${esc(x.purchase_date)} · ${esc(x.store||'Mercado')}</strong><b>${money(x.total)}</b></summary><ul>${lines.map(i=>`<li>${esc(i.name)} — ${Number(i.quantity)} ${esc(i.unit||'un')} × ${money(i.unit_price)}</li>`).join('')||'<li>Compra sem detalhamento disponível.</li>'}</ul></details>`;}
+ html+=`<details class="bi-item"><summary><strong>🛒 ${esc(x.purchase_date)} · ${esc(x.store||'Mercado')}</strong><b>${money(x.total)}</b></summary><ul>${lines.map(i=>`<li>${esc(i.name)} — ${sqdMarketQty(i.quantity)} ${esc(i.unit||'un')} × ${money(i.unit_price)}</li>`).join('')||'<li>Compra sem detalhamento disponível.</li>'}</ul></details>`;}
  box.innerHTML=html||'<p class="muted">As próximas compras ficarão registradas aqui, com todos os produtos.</p>';
 }
+/* UX09 Mercado: relatório exclusivo do histórico registrado. Sem tocar em lista ativa ou transações. */
+let sqdMarketHistoryOwner=null;
+let sqdMarketReceipts=[];
+let sqdMarketReceiptLines=[];
+const sqdMarketAmount=value=>Number(value)||0;
+const sqdMarketDate=iso=>/^\d{4}-\d{2}-\d{2}$/.test(String(iso||''))?String(iso).split('-').reverse().join('/'):'Data não informada';
+const sqdMarketQty=value=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:3}).format(sqdMarketAmount(value));
+async function sqdMarketPagedRead(table,owner){
+ const all=[];
+ for(let offset=0;offset<10000;offset+=500){
+  const {data,error}=await db().from(table).select('*').eq('user_id',owner).order('id',{ascending:true}).range(offset,offset+499);
+  if(error)throw error;
+  const batch=data||[];all.push(...batch);
+  if(batch.length<500)return all;
+ }
+ throw Error('Seu histórico é grande demais para esta exportação. Entre em contato com o suporte para exportação completa.');
+}
+function sqdMarketFilteredReceipts(){
+ const f=$('#sqd-market-pdf-filters');if(!f)return [];
+ const from=f.elements.start_date.value,to=f.elements.end_date.value,storeName=f.elements.store.value;
+ if(from&&to&&from>to)throw Error('A data inicial precisa ser anterior ou igual à data final.');
+ return sqdMarketReceipts.filter(p=>{
+  const d=String(p.purchase_date||'');
+  return (!from||d>=from)&&(!to||d<=to)&&(!storeName||String(p.store||'').trim()===storeName);
+ }).sort((a,b)=>String(b.purchase_date).localeCompare(String(a.purchase_date))||String(a.id).localeCompare(String(b.id)));
+}
+function sqdMarketPdfStats(){
+ const out=$('#sqd-market-pdf-result');if(!out)return;
+ try{const rows=sqdMarketFilteredReceipts();const value=rows.reduce((n,x)=>n+sqdMarketAmount(x.total),0);
+  out.textContent=rows.length?`${rows.length} compra(s) registrada(s) · Total ${money(value)}. Nenhum item da lista atual será incluído.`:'Nenhuma compra registrada corresponde aos filtros. Ajuste o período ou estabelecimento.';
+  const btn=$('#sqd-market-pdf-download');if(btn)btn.disabled=!rows.length;
+ }catch(e){out.textContent=e.message;const btn=$('#sqd-market-pdf-download');if(btn)btn.disabled=true;}
+}
+async function sqdMarketOpenPdf(){
+ const modal=$('#sqd-market-pdf-dialog');if(!modal)return info('Filtros do relatório indisponíveis. Reabra o aplicativo.',true);
+ if(!uid())return info('Entre na sua conta para exportar o histórico.',true);
+ const form=$('#sqd-market-pdf-filters');form.reset();
+ const btn=$('#sqd-market-pdf-download');if(btn)btn.disabled=true;
+ const status=$('#sqd-market-pdf-result');if(status)status.textContent='Consultando suas compras registradas…';
+ if(!modal.open){if(typeof modal.showModal==='function')modal.showModal();else modal.setAttribute('open','');}
+ const owner=uid();sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];
+ try{
+  const [purchases,lines]=await Promise.all([
+   sqdMarketPagedRead('scd_market_purchases',owner),
+   sqdMarketPagedRead('scd_market_purchase_items',owner)
+  ]);
+  if(owner!==uid())throw Error('Sua sessão mudou. Entre novamente para exportar.');
+  sqdMarketHistoryOwner=owner;sqdMarketReceipts=purchases;sqdMarketReceiptLines=lines;
+  const stores=[...new Set(purchases.map(p=>String(p.store||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const select=form.elements.store;
+  select.replaceChildren(new Option('Todos os estabelecimentos',''),...stores.map(x=>new Option(x,x)));
+  sqdMarketPdfStats();
+ }catch(e){sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];if(status)status.textContent='Não foi possível consultar o histórico de compras. Verifique a conexão e tente novamente.';
+  info(window.SCD_USER_ERROR?.(e)||'Falha ao consultar o histórico de compras.',true);
+ }
+}
+function sqdMarketCreatePdf(receipts){
+ if(!window.jspdf?.jsPDF)throw Error('Biblioteca PDF indisponível. Verifique a conexão e recarregue o aplicativo.');
+ const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});
+ const left=15,width=180,footerY=288;let y=15;
+ const navy=[24,31,52],purple=[180,93,223],cyan=[66,196,218],muted=[100,107,123];
+ const safe=str=>String(str??'').replace(/\s+/g,' ').trim();
+ const text=(str,x,yy,opts)=>doc.text(safe(str),x,yy,opts);
+ const fill=(r,g,b)=>doc.setFillColor(r,g,b);
+ const newPage=()=>{doc.addPage();y=20;doc.setFont('helvetica','normal');doc.setTextColor(...navy);doc.setFontSize(10);text('SERÁ QUE DEVO? · CONTINUAÇÃO DO HISTÓRICO',left,y);y+=12;};
+ const ensure=need=>{if(y+need>footerY-14)newPage()};
+ fill(...navy);doc.rect(0,0,210,38,'F');fill(...purple);doc.rect(0,38,105,2,'F');fill(...cyan);doc.rect(105,38,105,2,'F');
+ doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(19);text('Será Que Devo?',15,17);
+ doc.setFontSize(11);doc.setFont('helvetica','normal');text('RELATÓRIO DE COMPRAS REGISTRADAS',15,28);
+ y=49;doc.setTextColor(...navy);doc.setFontSize(9);
+ const f=$('#sqd-market-pdf-filters');const dt1=f?.elements.start_date.value||'',dt2=f?.elements.end_date.value||'',storeName=f?.elements.store.value||'';
+ const period=dt1||dt2?`${dt1?sqdMarketDate(dt1):'Início'} a ${dt2?sqdMarketDate(dt2):'Hoje'}`:'Todas as datas';
+ text(`Período: ${period}`,left,y);y+=6;
+ const storeLines=doc.splitTextToSize(`Estabelecimento: ${storeName||'Todos'}`,width);doc.text(storeLines,left,y);y+=storeLines.length*5+3;
+ const total=receipts.reduce((a,x)=>a+sqdMarketAmount(x.total),0);
+ fill(244,247,251);doc.roundedRect(left,y,width,19,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...muted);
+ text(`${receipts.length} compra(s) finalizada(s)`,left+7,y+8);doc.setTextColor(...navy);doc.setFontSize(13);text(money(total),left+width-7,y+12,{align:'right'});
+ y+=27;
+ const byPurchase=new Map();for(const it of sqdMarketReceiptLines){const key=String(it.purchase_id||'');if(!byPurchase.has(key))byPurchase.set(key,[]);byPurchase.get(key).push(it);}
+ for(const p of receipts){
+  const lines=byPurchase.get(String(p.id))||[];
+  ensure(33);
+  fill(...navy);doc.roundedRect(left,y,width,15,2,2,'F');doc.setTextColor(255,255,255);doc.setFontSize(10);doc.setFont('helvetica','bold');
+  const name=doc.splitTextToSize(`${sqdMarketDate(p.purchase_date)}  •  ${safe(p.store)||'Mercado não informado'}`,117)[0];
+  text(name,left+5,y+9);doc.setFontSize(10);text(money(p.total),left+width-5,y+9,{align:'right'});y+=19;
+  const x=[left+2,left+88,left+116,left+146];
+  fill(237,241,248);doc.rect(left,y,width,9,'F');doc.setTextColor(...navy);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  for(const [i,h] of ['Produto / categoria','Quantidade','Preço un.','Subtotal'].entries())text(h,x[i],y+5.9);
+  y+=9;doc.setFont('helvetica','normal');
+  if(!lines.length){ensure(13);doc.setTextColor(...muted);text('Compra sem detalhamento de itens disponível.',left+3,y+7);y+=13;}
+  for(const line of lines){
+   const names=doc.splitTextToSize(safe(line.name)||'Produto não informado',80);
+   const category=doc.splitTextToSize(safe(line.category)||'Sem categoria',80);
+   const rowH=Math.max(12,6+Math.min(3,names.length)*4+Math.min(2,category.length)*3);
+   if(y+rowH>footerY-17){newPage();fill(237,241,248);doc.rect(left,y,width,8,'F');doc.setTextColor(...navy);doc.setFont('helvetica','bold');doc.setFontSize(8);['Produto / categoria','Quantidade','Preço un.','Subtotal'].forEach((h,i)=>text(h,x[i],y+5.5));y+=8;doc.setFont('helvetica','normal');}
+   fill(250,251,254);doc.rect(left,y,width,rowH,'F');doc.setDrawColor(224,230,237);doc.line(left,y+rowH,left+width,y+rowH);
+   doc.setTextColor(...navy);doc.setFontSize(8.6);doc.text(names.slice(0,3),x[0],y+5);
+   doc.setTextColor(...muted);doc.setFontSize(7.5);doc.text(category.slice(0,2),x[0],y+5+Math.min(3,names.length)*4);
+   doc.setTextColor(...navy);doc.setFontSize(8.1);text(`${sqdMarketQty(line.quantity)} ${safe(line.unit)||'un'}`,x[1],y+6);
+   text(money(line.unit_price),x[2],y+6);text(money(line.line_total??sqdMarketAmount(line.quantity)*sqdMarketAmount(line.unit_price)),left+width-4,y+6,{align:'right'});
+   y+=rowH;
+  }
+  ensure(15);doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(9.5);
+  text(`Total registrado da compra: ${money(p.total)}`,left+width-3,y+8,{align:'right'});y+=17;
+ }
+ const count=doc.getNumberOfPages();for(let p=1;p<=count;p++){
+  doc.setPage(p);doc.setDrawColor(223,228,238);doc.line(left,282,195,282);doc.setTextColor(...muted);doc.setFont('helvetica','normal');doc.setFontSize(7.2);
+  text('Dados informados pelo usuário. Relatório pessoal, não é documento fiscal.',left,287);
+  text(`${p} / ${count}`,195,287,{align:'right'});
+ }
+ return doc;
+}
+function sqdMarketDownloadPdf(){
+ if(!uid()||uid()!==sqdMarketHistoryOwner)return info('Sua sessão mudou. Consulte o histórico novamente.',true);
+ try{const rows=sqdMarketFilteredReceipts();if(!rows.length)return info('Não há compras registradas com os filtros escolhidos.',true);
+  const doc=sqdMarketCreatePdf(rows),f=$('#sqd-market-pdf-filters');
+  const part=s=>String(s||'').replace(/[^0-9a-z-]/gi,'-').slice(0,35);
+  const filename=`sera-que-devo-mercado-historico-${part(f.elements.start_date.value||'inicio')}-${part(f.elements.end_date.value||'fim')}.pdf`;
+  doc.save(filename);$('#sqd-market-pdf-dialog')?.close();info('Relatório de compras registradas gerado.');
+ }catch(e){info(e?.message||'Não foi possível gerar o PDF do histórico.',true);}
+}
+function sqdMarketSetupPdf(){
+ const host=$('#view-market');if(!host||$('#sqd-market-pdf-dialog'))return;
+ host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><form id="sqd-market-pdf-filters" method="dialog" class="sqd-market-report-form"><h3 id="sqd-market-pdf-title">📄 Relatório do histórico de compras</h3><p>Inclui somente compras já registradas. Produtos da lista atual não aparecem neste PDF.</p><div class="sqd-market-report-fields"><label>Data inicial<input name="start_date" type="date"></label><label>Data final<input name="end_date" type="date"></label><label class="sqd-market-report-full">Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label></div><p id="sqd-market-pdf-result" class="sqd-market-report-preview" aria-live="polite">Escolha os filtros para gerar o relatório.</p><div class="sqd-market-report-actions"><button type="button" id="sqd-market-pdf-cancel" class="btn ghost">Cancelar</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>Baixar PDF do histórico</button></div></form></dialog>`);
+ const form=$('#sqd-market-pdf-filters');form.addEventListener('input',sqdMarketPdfStats);form.addEventListener('change',sqdMarketPdfStats);
+ $('#sqd-market-pdf-cancel').addEventListener('click',()=>$('#sqd-market-pdf-dialog').close());
+ $('#sqd-market-pdf-download').addEventListener('click',sqdMarketDownloadPdf);
+}
+window.SCD_MARKET_PDF={open:sqdMarketOpenPdf};
+
 function renderTickets(){const box=$('#bi-ticket-list');if(!box)return;box.innerHTML=store.tickets.length?store.tickets.map(t=>`<article class="bi-item"><div><strong>${esc(t.subject)}</strong><small>${esc(t.category)} · ${esc(t.status)}</small></div><small>${esc(t.created_at?.slice(0,10)||'')}</small></article>`).join(''):'<p class="muted">Nenhuma solicitação registrada.</p>'}
 
 function easter(Y){const a=Y%19,b=Math.floor(Y/100),c=Y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k+7)%7,m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31),day1=(h+l-7*m+114)%31+1;return new Date(Y,month-1,day1,12)}
@@ -144,6 +274,7 @@ function compose(){
  $('#view-dashboard').insertAdjacentHTML('beforeend','<section class="bi-panel"><div class="bi-panel-title"><h2>🏦 Contas e faturas</h2><small>Controle manual, sem conexão bancária</small></div><div id="bi-bank-overview" class="bi-bank-overview"></div><h3>💳 Próximos compromissos do cartão</h3><div id="bi-upcoming-invoices" class="bi-upcoming-invoices"></div></section><section class="bi-panel"><div class="bi-panel-title"><h2>📊 Resumo Financeiro</h2><small>Baseado nos seus registros manuais</small></div><div id="bi-insights-mini" class="bi-kpis"></div><p class="fine" id="bi-estimate-note"></p><p class="fine">Não conectamos contas bancárias e não oferecemos crédito.</p></section>');
  $('#view-market').insertAdjacentHTML('beforeend','<section class="bi-panel"><h2>📚 Histórico de compras detalhadas</h2><div id="bi-market-history" class="bi-stack"></div></section>');
  $('#market-items').insertAdjacentHTML('beforebegin','<div class="bi-inline"><label>Conta da compra<select id="bi-account-select"><option value="">Conta não informada</option></select></label><button type="button" id="bi-select-all" class="btn ghost">☑ Selecionar tudo</button><button type="button" id="bi-select-none" class="btn ghost">Desmarcar tudo</button><label>Estabelecimento (opcional)<input id="bi-market-store" maxlength="120" placeholder="Mercado do bairro"></label></div>');
+ const chooseAll=$('#bi-select-all'),chooseNone=$('#bi-select-none');if(chooseAll&&chooseNone){const group=document.createElement('div');group.className='sqd-market-select-actions';chooseAll.before(group);group.append(chooseAll,chooseNone)}
  const txForm=$('#transaction-form');if(txForm){const target=txForm.querySelector('[name="date"]')?.closest('label');target?.insertAdjacentHTML('afterend','<label>Conta de recebimento/pagamento<select id="bi-tx-account" name="account_id"><option value="">Sem conta vinculada</option></select></label>');}
  const alerts=document.createElement('div');alerts.id='bi-maint-status';alerts.className='bi-maint-banner';alerts.hidden=true;$('#main').insertBefore(alerts,$('#app-banner'));
  $('#app-banner').insertAdjacentHTML('afterend','<div id="bi-modules-warning" class="notice error" hidden></div>');
@@ -181,7 +312,7 @@ function updateCardInterestPreview(){
  catch(e){preview.textContent=e.message}
 }
 function setup(){
- if(ready)return;ready=true;compose();
+ if(ready)return;ready=true;compose();sqdMarketSetupPdf();
  $('#bi-card-pay-select')?.addEventListener('change',()=>{updateInvoicesSelector();const id=$('#bi-card-pay-select').value;const card=store.cards.find(c=>c.id===id);const account=$('#bi-card-pay-form [name="account_id"]');if(account&&card?.payment_account_id)account.value=card.payment_account_id;remember('card',id)});
  $('#bi-card-purchase-select')?.addEventListener('change',ev=>remember('card',ev.target.value));
  const buyForm=$('#bi-card-purchase-form');if(buyForm){for(const name of ['total','interest','installments'])buyForm.elements[name]?.addEventListener('input',updateCardInterestPreview);updateCardInterestPreview()}

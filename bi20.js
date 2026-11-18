@@ -94,24 +94,35 @@ async function sqdMarketPagedRead(table,owner){
 function sqdMarketFilteredReceipts(){
  const f=$('#sqd-market-pdf-filters');if(!f)return [];
  const from=f.elements.start_date.value,to=f.elements.end_date.value,storeName=f.elements.store.value;
+ const query=String(f.elements.query.value||'').trim().toLocaleLowerCase('pt-BR');
+ const minRaw=f.elements.min_total.value,maxRaw=f.elements.max_total.value;
+ const min=minRaw===''?null:Number(minRaw),max=maxRaw===''?null:Number(maxRaw);
+ if((min!==null&&(!Number.isFinite(min)||min<0))||(max!==null&&(!Number.isFinite(max)||max<0)))throw Error('Os valores de filtro precisam ser positivos.');
+ if(min!==null&&max!==null&&min>max)throw Error('O valor mínimo não pode superar o máximo.');
  if(from&&to&&from>to)throw Error('A data inicial precisa ser anterior ou igual à data final.');
  return sqdMarketReceipts.filter(p=>{
   const d=String(p.purchase_date||'');
-  return (!from||d>=from)&&(!to||d<=to)&&(!storeName||String(p.store||'').trim()===storeName);
+  const purchaseItems=sqdMarketReceiptLines.filter(i=>String(i.purchase_id)===String(p.id));
+  const searchable=[p.store||'',...purchaseItems.map(x=>x.name||'')].join(' ').toLocaleLowerCase('pt-BR');
+  const total=sqdMarketAmount(p.total);
+  return (!from||d>=from)&&(!to||d<=to)&&(!storeName||(storeName==='__SEM_NOME__'?!String(p.store||'').trim():String(p.store||'').trim()===storeName))&&(!query||searchable.includes(query))&&(min===null||total>=min)&&(max===null||total<=max);
  }).sort((a,b)=>String(b.purchase_date).localeCompare(String(a.purchase_date))||String(a.id).localeCompare(String(b.id)));
 }
 function sqdMarketPdfStats(){
  const out=$('#sqd-market-pdf-result');if(!out)return;
  try{const rows=sqdMarketFilteredReceipts();const value=rows.reduce((n,x)=>n+sqdMarketAmount(x.total),0);
   out.textContent=rows.length?`${rows.length} compra(s) registrada(s) · Total ${money(value)}. Nenhum item da lista atual será incluído.`:'Nenhuma compra registrada corresponde aos filtros. Ajuste o período ou estabelecimento.';
-  const btn=$('#sqd-market-pdf-download');if(btn)btn.disabled=!rows.length;
- }catch(e){out.textContent=e.message;const btn=$('#sqd-market-pdf-download');if(btn)btn.disabled=true;}
+  for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=!rows.length;
+ }catch(e){out.textContent=e.message;for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=true;}
 }
-async function sqdMarketOpenPdf(){
+let sqdMarketExportType='pdf';
+async function sqdMarketOpenPdf(type='pdf'){
+ sqdMarketExportType=type==='csv'?'csv':'pdf';
  const modal=$('#sqd-market-pdf-dialog');if(!modal)return info('Filtros do relatório indisponíveis. Reabra o aplicativo.',true);
  if(!uid())return info('Entre na sua conta para exportar o histórico.',true);
  const form=$('#sqd-market-pdf-filters');form.reset();
- const btn=$('#sqd-market-pdf-download');if(btn)btn.disabled=true;
+ sqdMarketPreset('all');
+ for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=true;
  const status=$('#sqd-market-pdf-result');if(status)status.textContent='Consultando suas compras registradas…';
  if(!modal.open){if(typeof modal.showModal==='function')modal.showModal();else modal.setAttribute('open','');}
  const owner=uid();sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];
@@ -124,11 +135,41 @@ async function sqdMarketOpenPdf(){
   sqdMarketHistoryOwner=owner;sqdMarketReceipts=purchases;sqdMarketReceiptLines=lines;
   const stores=[...new Set(purchases.map(p=>String(p.store||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const select=form.elements.store;
-  select.replaceChildren(new Option('Todos os estabelecimentos',''),...stores.map(x=>new Option(x,x)));
+  select.replaceChildren(new Option('Todos os estabelecimentos',''),new Option('Sem nome informado (compras antigas)','__SEM_NOME__'),...stores.map(x=>new Option(x,x)));
+  $('#sqd-market-pdf-format').textContent=sqdMarketExportType==='csv'?'Exportação de histórico · CSV':'Exportação de histórico · PDF';
   sqdMarketPdfStats();
  }catch(e){sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];if(status)status.textContent='Não foi possível consultar o histórico de compras. Verifique a conexão e tente novamente.';
   info(window.SCD_USER_ERROR?.(e)||'Falha ao consultar o histórico de compras.',true);
  }
+}
+function sqdMarketPreset(preset){
+ const f=$('#sqd-market-pdf-filters');if(!f)return;
+ const today=day();const date=new Date(today+'T12:00:00');let start='',end='';
+ if(preset==='month'){start=today.slice(0,7)+'-01';end=today;}
+ if(preset==='30d'){date.setDate(date.getDate()-29);start=dayFromDate(date);end=today;}
+ if(preset==='today'){start=today;end=today;}
+ if(preset!=='custom'){f.elements.start_date.value=start;f.elements.end_date.value=end;}
+ f.dataset.preset=preset;
+ for(const b of $$('#sqd-market-pdf-dialog [data-market-preset]'))b.setAttribute('aria-pressed',String(b.dataset.marketPreset===preset));
+ $('#sqd-market-custom-dates').hidden=preset!=='custom';
+ sqdMarketPdfStats();
+}
+function dayFromDate(dt){return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`}
+function sqdMarketDownloadCsv(){
+ if(!uid()||uid()!==sqdMarketHistoryOwner)return info('Sua sessão mudou. Consulte o histórico novamente.',true);
+ try{
+  const receipts=sqdMarketFilteredReceipts();if(!receipts.length)return info('Nenhuma compra corresponde aos filtros.',true);
+  const columns=['Data','Estabelecimento','Produto','Categoria','Quantidade','Unidade','Preço unitário (R$)','Subtotal (R$)','Total da compra (R$)','ID da compra'];
+  const fmtDec=v=>Number(v||0).toFixed(2).replace('.',',');const quoted=value=>'"'+String(value??'').replace(/"/g,'""').replace(/[\r\n]/g,' ').replace(/^[=+@-]/,x=>'\''+x)+'"';
+  const result=[columns];
+  for(const purchase of receipts){const items=sqdMarketReceiptLines.filter(x=>String(x.purchase_id)===String(purchase.id));
+   if(!items.length)result.push([purchase.purchase_date,purchase.store||'Não informado','Sem detalhamento','','','','','',fmtDec(purchase.total),purchase.id]);
+   else for(const item of items)result.push([purchase.purchase_date,purchase.store||'Não informado',item.name,item.category||'',item.quantity,item.unit||'un',fmtDec(item.unit_price),fmtDec(item.line_total??Number(item.quantity)*Number(item.unit_price)),fmtDec(purchase.total),purchase.id]);
+  }
+  const content='\ufeff'+result.map(row=>row.map(quoted).join(';')).join('\r\n');
+  const blob=new Blob([content],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='sera-que-devo-historico-mercado-'+day()+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $('#sqd-market-pdf-dialog')?.close();info('CSV de compras finalizadas gerado.');
+ }catch(e){info(e.message||'Não foi possível exportar o CSV.',true)}
 }
 function sqdMarketCreatePdf(receipts){
  if(!window.jspdf?.jsPDF)throw Error('Biblioteca PDF indisponível. Verifique a conexão e recarregue o aplicativo.');
@@ -147,7 +188,7 @@ function sqdMarketCreatePdf(receipts){
  const f=$('#sqd-market-pdf-filters');const dt1=f?.elements.start_date.value||'',dt2=f?.elements.end_date.value||'',storeName=f?.elements.store.value||'';
  const period=dt1||dt2?`${dt1?sqdMarketDate(dt1):'Início'} a ${dt2?sqdMarketDate(dt2):'Hoje'}`:'Todas as datas';
  text(`Período: ${period}`,left,y);y+=6;
- const storeLines=doc.splitTextToSize(`Estabelecimento: ${storeName||'Todos'}`,width);doc.text(storeLines,left,y);y+=storeLines.length*5+3;
+ const storeLines=doc.splitTextToSize(`Estabelecimento: ${storeName==='__SEM_NOME__'?'Sem nome informado':storeName||'Todos'}${f.elements.query.value?' · Busca: '+f.elements.query.value:''}`,width);doc.text(storeLines,left,y);y+=storeLines.length*5+3;
  const total=receipts.reduce((a,x)=>a+sqdMarketAmount(x.total),0);
  fill(244,247,251);doc.roundedRect(left,y,width,19,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...muted);
  text(`${receipts.length} compra(s) finalizada(s)`,left+7,y+8);doc.setTextColor(...navy);doc.setFontSize(13);text(money(total),left+width-7,y+12,{align:'right'});
@@ -197,10 +238,13 @@ function sqdMarketDownloadPdf(){
 }
 function sqdMarketSetupPdf(){
  const host=$('#view-market');if(!host||$('#sqd-market-pdf-dialog'))return;
- host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><form id="sqd-market-pdf-filters" method="dialog" class="sqd-market-report-form"><h3 id="sqd-market-pdf-title">📄 Relatório do histórico de compras</h3><p>Inclui somente compras já registradas. Produtos da lista atual não aparecem neste PDF.</p><div class="sqd-market-report-fields"><label>Data inicial<input name="start_date" type="date"></label><label>Data final<input name="end_date" type="date"></label><label class="sqd-market-report-full">Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label></div><p id="sqd-market-pdf-result" class="sqd-market-report-preview" aria-live="polite">Escolha os filtros para gerar o relatório.</p><div class="sqd-market-report-actions"><button type="button" id="sqd-market-pdf-cancel" class="btn ghost">Cancelar</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>Baixar PDF do histórico</button></div></form></dialog>`);
+ host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><div class="sqd-market-report-form"><div class="sqd-market-modal-top"><div><span id="sqd-market-pdf-format" class="sqd-market-eyebrow">EXPORTAR HISTÓRICO</span><h3 id="sqd-market-pdf-title">📊 Suas compras registradas</h3><p>Somente compras finalizadas. Sua lista atual não entra no relatório.</p></div><button id="sqd-market-pdf-cancel" type="button" class="sqd-market-icon-close" aria-label="Fechar filtros">×</button></div><form id="sqd-market-pdf-filters" class="sqd-market-report-controls"><fieldset class="sqd-market-period-choices"><legend>1. Escolha o período</legend><div class="sqd-market-segments"><button type="button" data-market-preset="all" aria-pressed="true">Tudo</button><button type="button" data-market-preset="month">Este mês</button><button type="button" data-market-preset="30d">30 dias</button><button type="button" data-market-preset="today">Hoje</button><button type="button" data-market-preset="custom">Datas</button></div></fieldset><div class="sqd-market-report-fields" id="sqd-market-custom-dates" hidden><label>De<input name="start_date" type="date"></label><label>Até<input name="end_date" type="date"></label></div><label class="sqd-market-report-full">2. Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label><details class="sqd-market-advanced"><summary>⚙️ Mais filtros (opcional)</summary><div class="sqd-market-report-fields"><label class="sqd-market-report-full">Buscar produto ou mercado<input name="query" type="search" maxlength="100" placeholder="Ex.: café"></label><label>Valor mínimo (R$)<input name="min_total" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></label><label>Valor máximo (R$)<input name="max_total" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Sem limite"></label></div></details></form><div class="sqd-market-result-block"><span class="sqd-market-result-caption">PRÉVIA DA EXPORTAÇÃO</span><p id="sqd-market-pdf-result" class="sqd-market-report-preview" role="status" aria-live="polite">Consultando o histórico…</p></div><div class="sqd-market-report-actions"><button type="button" id="sqd-market-csv-download" class="btn ghost" disabled>↓ Baixar CSV</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>▤ Gerar PDF</button></div></div></dialog>`);
  const form=$('#sqd-market-pdf-filters');form.addEventListener('input',sqdMarketPdfStats);form.addEventListener('change',sqdMarketPdfStats);
  $('#sqd-market-pdf-cancel').addEventListener('click',()=>$('#sqd-market-pdf-dialog').close());
+ $$('#sqd-market-pdf-dialog [data-market-preset]').forEach(b=>b.addEventListener('click',()=>sqdMarketPreset(b.dataset.marketPreset)));
+ $$('#sqd-market-custom-dates input').forEach(el=>el.addEventListener('change',()=>sqdMarketPdfStats()));
  $('#sqd-market-pdf-download').addEventListener('click',sqdMarketDownloadPdf);
+ $('#sqd-market-csv-download').addEventListener('click',sqdMarketDownloadCsv);
 }
 window.SCD_MARKET_PDF={open:sqdMarketOpenPdf};
 
@@ -272,8 +316,14 @@ function compose(){
  // Reinsert before footer to retain original footer at bottom.
  const foot=main.querySelector('.footer');if(foot)$$('#view-bi-accounts,#view-bi-cards,#view-bi-debts,#view-bi-recurring,#view-bi-help').forEach(el=>foot.before(el));
  $('#view-dashboard').insertAdjacentHTML('beforeend','<section class="bi-panel"><div class="bi-panel-title"><h2>🏦 Contas e faturas</h2><small>Controle manual, sem conexão bancária</small></div><div id="bi-bank-overview" class="bi-bank-overview"></div><h3>💳 Próximos compromissos do cartão</h3><div id="bi-upcoming-invoices" class="bi-upcoming-invoices"></div></section><section class="bi-panel"><div class="bi-panel-title"><h2>📊 Resumo Financeiro</h2><small>Baseado nos seus registros manuais</small></div><div id="bi-insights-mini" class="bi-kpis"></div><p class="fine" id="bi-estimate-note"></p><p class="fine">Não conectamos contas bancárias e não oferecemos crédito.</p></section>');
- $('#view-market').insertAdjacentHTML('beforeend','<section class="bi-panel"><h2>📚 Histórico de compras detalhadas</h2><div id="bi-market-history" class="bi-stack"></div></section>');
- $('#market-items').insertAdjacentHTML('beforebegin','<div class="bi-inline"><label>Conta da compra<select id="bi-account-select"><option value="">Conta não informada</option></select></label><button type="button" id="bi-select-all" class="btn ghost">☑ Selecionar tudo</button><button type="button" id="bi-select-none" class="btn ghost">Desmarcar tudo</button><label>Estabelecimento (opcional)<input id="bi-market-store" maxlength="120" placeholder="Mercado do bairro"></label></div>');
+ $('#view-market').insertAdjacentHTML('beforeend','<section class="bi-panel sqd-market-history-panel"><div class="sqd-market-history-head"><div><h2>📚 Histórico de compras detalhadas</h2><p class="fine">Compras concluídas · exporte somente o que já foi registrado.</p></div><div class="sqd-market-history-actions"></div></div><div id="bi-market-history" class="bi-stack"></div></section>');
+ // Reuse the original controls to preserve registered click listeners.
+ const historyActions=$('#view-market .sqd-market-history-actions');
+ const exportActions=$('#view-market .sqd-market-export-actions');
+ if(historyActions&&exportActions){for(const button of [...exportActions.querySelectorAll('button')])historyActions.append(button);exportActions.remove();}
+ if($('#market-export'))$('#market-export').textContent='↓ CSV do histórico';
+ if($('#market-export-pdf'))$('#market-export-pdf').textContent='▤ PDF do histórico';
+ $('#market-items').insertAdjacentHTML('beforebegin','<div class="bi-inline"><label>Conta da compra<select id="bi-account-select"><option value="">Conta não informada</option></select></label><button type="button" id="bi-select-all" class="btn ghost">☑ Selecionar tudo</button><button type="button" id="bi-select-none" class="btn ghost">Desmarcar tudo</button><label class="sqd-market-store-label">Nome do mercado <span class="sqd-market-required">(obrigatório ao registrar)</span><input id="bi-market-store" maxlength="120" autocomplete="organization" placeholder="Ex.: Mercado do bairro" required></label></div>');
  const chooseAll=$('#bi-select-all'),chooseNone=$('#bi-select-none');if(chooseAll&&chooseNone){const group=document.createElement('div');group.className='sqd-market-select-actions';chooseAll.before(group);group.append(chooseAll,chooseNone)}
  const txForm=$('#transaction-form');if(txForm){const target=txForm.querySelector('[name="date"]')?.closest('label');target?.insertAdjacentHTML('afterend','<label>Conta de recebimento/pagamento<select id="bi-tx-account" name="account_id"><option value="">Sem conta vinculada</option></select></label>');}
  const alerts=document.createElement('div');alerts.id='bi-maint-status';alerts.className='bi-maint-banner';alerts.hidden=true;$('#main').insertBefore(alerts,$('#app-banner'));
@@ -356,10 +406,13 @@ async function payLegacy(id,paid){const t=B()?.state?.transactions?.find(x=>x.id
  await action(()=>db().from('transactions').update({status:paid?'paid':'pending',paid_at:paid?day():null,account_id:account}).eq('id',id).eq('user_id',uid()),paid?'Pagamento confirmado.':'Lançamento pendente novamente.');}
 async function setAll(checked){await action(()=>db().from('market_items').update({checked}).eq('user_id',uid()),checked?'Todos os itens selecionados.':'Itens desmarcados.')}
 async function checkoutV2(){const items=B()?.state?.market_items||[],chosen=items.filter(x=>x.checked);if(!chosen.length)return info('Selecione ao menos um produto.',true);
+ const storeName=String($('#bi-market-store')?.value||'').trim();
+ if(!storeName)return info('Informe o nome do mercado antes de registrar a compra. Ex.: Mercado do bairro.',true);
+ if(storeName.length>120)return info('O nome do mercado pode ter no máximo 120 caracteres.',true);
  const sum=chosen.reduce((v,x)=>v+Number(x.quantity)*Number(x.unit_price),0);
- if(!await window.SCD_UI.confirm(`Finalizar ${chosen.length} itens por ${money(sum)}? A compra ficará no histórico detalhado.`,`Finalizar compra`))return;
+ if(!await window.SCD_UI.confirm(`Registrar ${chosen.length} item(ns) em ${storeName} por ${money(sum)}? A compra ficará no histórico detalhado e gerará uma despesa.`,`Confirmar compra`))return;
  const selected=$('#bi-account-select')?.value||null;if(!selected)return info('Selecione a conta usada no mercado. Se não tiver uma, cadastre em Contas e Bancos.',true);if(selected)remember('account',selected);
- await action(()=>db().rpc('scd_checkout_market_v2',{p_ids:chosen.map(x=>x.id),p_date:day(),p_account_id:selected,p_request_key:crypto.randomUUID(),p_store:$('#bi-market-store')?.value||''}),'Compra registrada com itens e total.');}
+ await action(()=>db().rpc('scd_checkout_market_v2',{p_ids:chosen.map(x=>x.id),p_date:day(),p_account_id:selected,p_request_key:crypto.randomUUID(),p_store:storeName}),'Compra registrada com itens e total.');}
 window.SCD_BI20={renderPandora,renderBI,fetchExtra,renderExtras,paintHolidays,balances,cardInvoiceRows};
 window.addEventListener('load',()=>{setup();if(uid()){fetchExtra().then(()=>{renderAccountDropdowns();applyPreferences()});updateMaint()}});
 })();

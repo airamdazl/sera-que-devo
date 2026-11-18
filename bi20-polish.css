@@ -252,3 +252,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 #view-market .sqd-market-ocr-row .sqd-ocr-include{display:inline-flex;flex-direction:row;align-items:center;gap:9px;min-width:0}
 #view-market .sqd-market-ocr-row .sqd-ocr-include input{flex:0 0 19px;width:19px;height:19px;margin:0;padding:0}
+
+/* UX14 — confirmação de integridade do cupom; layout mobile-first. */
+#view-market .sqd-ocr-validation{padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);display:grid;gap:10px;max-width:100%;}
+#view-market .sqd-ocr-validation>strong{font-size:.94rem;}
+#view-market .sqd-ocr-validation-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+#view-market .sqd-ocr-validation-fields label{font-size:.79rem;min-width:0;gap:6px;}
+#view-market .sqd-ocr-validation-fields input{width:100%;min-width:0;box-sizing:border-box;font-size:.92rem;}
+#view-market #sqd-ocr-validation-message{margin:0;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:.82rem;line-height:1.5;}
+#view-market #sqd-ocr-validation-message.sqd-ocr-validation-alert{border-color:#ea918f;background:color-mix(in srgb,#b54451 16%,var(--surface));color:var(--text);font-weight:700;}
+#view-market .sqd-ocr-review-check{display:flex;flex-direction:row;align-items:flex-start;gap:10px;line-height:1.45;font-size:.84rem;}
+#view-market .sqd-ocr-review-check input{width:20px;height:20px;flex:none;accent-color:var(--primary);}
+@media(max-width:390px){#view-market .sqd-ocr-validation-fields{grid-template-columns:1fr;}}
+/* UX14 — botão mostrar/ocultar senha; não altera campos de e-mail ou validação. */
+.scd-password-field{display:block;position:relative;width:100%;min-width:0;}
+.scd-password-field input:not([type="checkbox"]){padding-right:54px!important;}
+.scd-password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:42px;height:42px;min-width:42px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;}
+.scd-password-toggle:hover{background:var(--primary-soft);color:var(--primary);}
+.scd-password-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:1px;}
+
+/* BETA 3.0 — acessibilidade e educação financeira, sem sobrescrever as demais telas */
+.scd-benefit-register,.scd-card-fallback{border:1px solid var(--line);border-radius:15px;padding:14px;background:var(--surface-2);margin:13px 0}
+.scd-card-fallback p{margin:0 0 10px;line-height:1.55}
+.scd-card-fallback .btn{width:100%}
+.scd-tax-box{display:flex;flex-direction:column;gap:7px;min-width:0}
+.scd-tax-box small{line-height:1.5;max-width:44rem}
+.scd-purchase-education{max-width:min(560px,calc(100vw - 24px));width:100%;box-sizing:border-box}
+.scd-purchase-education .modal-body{max-height:min(55vh,390px);overflow:auto}
+.scd-purchase-education #scd-education-tip{padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.scd-purchase-education #scd-education-done{width:100%}
+@media(max-width:750px){.scd-purchase-education{padding:17px}.scd-benefit-register,.scd-card-fallback{padding:12px}}

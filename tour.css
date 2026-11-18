@@ -1,0 +1,40 @@
+/* Será Que Devo? Beta 3.0 — tour de primeiros passos; CSS isolado. */
+.scd-tour-layer[hidden]{display:none!important}
+.scd-tour-layer{position:fixed;inset:0;z-index:2147483000;font-family:inherit}
+.scd-tour-intercept{position:fixed;inset:0;z-index:0;background:transparent;cursor:default}
+.scd-tour-highlight{position:fixed;z-index:1;pointer-events:none;border:2px solid #c982ff;border-radius:16px;background:transparent;box-shadow:0 0 0 9999px rgba(5,8,21,.80),0 0 0 4px rgba(103,207,237,.35);transition:left .18s ease,top .18s ease,width .18s ease,height .18s ease}
+.scd-tour-card{box-sizing:border-box;position:fixed;z-index:2;right:clamp(14px,3vw,36px);bottom:clamp(14px,3vh,34px);width:min(420px,calc(100vw - 28px));max-height:min(560px,72dvh);overflow:auto;padding:22px;border:1px solid #8a5cd0;border-radius:23px;color:var(--text,#f3f2fa);background:var(--surface,#161a2b);box-shadow:0 22px 65px #0009,0 0 45px #b06cf42c;outline:0}
+.scd-tour-card:before{content:"";display:block;height:4px;border-radius:10px;background:linear-gradient(90deg,#b775ff,#e56bc8,#6bd1e8);margin:-2px 0 17px}
+.scd-tour-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.scd-tour-identity{display:inline-flex;align-items:center;gap:8px;color:var(--primary,#b68afb);font-size:.72rem;font-weight:850;letter-spacing:.07em}
+.scd-tour-identity img{height:39px;width:39px;object-fit:contain;border-radius:50%;background:var(--surface-2,#252d40)}
+.scd-tour-dismiss{background:transparent;border:0;color:var(--muted,#b1b5c6);font:inherit;font-size:.78rem;font-weight:750;padding:9px;white-space:nowrap;cursor:pointer}
+.scd-tour-dismiss:hover,.scd-tour-dismiss:focus-visible{color:var(--text,#fff)}
+.scd-tour-count{color:var(--muted,#adb6cb);font-size:.78rem;margin:15px 0 7px}
+.scd-tour-card h2{font-size:clamp(1.15rem,4vw,1.43rem);line-height:1.22;letter-spacing:-.025em;margin:0 0 10px}
+.scd-tour-card p#scd-tour-text{font-size:.91rem;line-height:1.56;color:var(--text,#f4f4fb);margin:0 0 17px}
+.scd-tour-progress{height:7px;border-radius:20px;background:var(--surface-2,#273144);overflow:hidden;margin-bottom:19px}
+.scd-tour-progress:after{content:"";display:block;width:var(--scd-tour-progress,10%);height:100%;border-radius:20px;background:linear-gradient(90deg,#b775ff,#e56bc8,#6bd1e8);transition:width .2s ease}
+.scd-tour-controls{display:flex;gap:9px}
+.scd-tour-btn{appearance:none;flex:1;min-height:44px;border-radius:12px;padding:11px 14px;font:inherit;font-size:.86rem;font-weight:800;cursor:pointer}
+.scd-tour-btn.ghost{color:var(--text,#fff);background:var(--surface-2,#232b3f);border:1px solid var(--line,#414861)}
+.scd-tour-btn.primary{background:linear-gradient(110deg,#bd79f1,#ea74bf);border:0;color:#21102d}
+.scd-tour-btn:disabled{opacity:.48;cursor:default}
+.scd-tour-btn:focus-visible,.scd-tour-dismiss:focus-visible{outline:3px solid #66dce6;outline-offset:2px}
+.scd-tour-small{font-size:.70rem;color:var(--muted,#adb6cb);margin:12px 0 0;line-height:1.4}
+.scd-faq-tour-box{margin:12px 0 18px;padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--surface-2);display:grid;gap:10px}
+.scd-faq-tour-box p{margin:0!important;line-height:1.5}
+.scd-faq-tour-box button{justify-self:start;min-height:44px;white-space:normal;text-align:left}
+@media(max-width:750px){
+ .scd-tour-card{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:auto;max-height:46dvh;border-radius:19px;padding:15px 17px}
+ .scd-tour-card:before{margin:0 0 9px}
+ .scd-tour-identity img{height:29px;width:29px}
+ .scd-tour-count{margin:8px 0 4px}
+ .scd-tour-card p#scd-tour-text{font-size:.85rem;line-height:1.48;margin-bottom:11px}
+ .scd-tour-card h2{font-size:1.14rem;margin-bottom:7px}
+ .scd-tour-progress{margin-bottom:10px}
+ .scd-tour-btn{min-height:40px;padding:8px}
+ .scd-tour-small{margin-top:9px;font-size:.66rem}
+}
+@media(max-height:570px){.scd-tour-card{max-height:65dvh;padding:12px}.scd-tour-card p#scd-tour-text{font-size:.79rem}}
+@media(prefers-reduced-motion:reduce){.scd-tour-highlight,.scd-tour-progress:after{transition:none}}

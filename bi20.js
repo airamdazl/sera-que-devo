@@ -91,27 +91,25 @@ async function sqdMarketPagedRead(table,owner){
  }
  throw Error('Seu histórico é grande demais para esta exportação. Entre em contato com o suporte para exportação completa.');
 }
+function sqdMarketSearchText(value){
+ return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+}
 function sqdMarketFilteredReceipts(){
  const f=$('#sqd-market-pdf-filters');if(!f)return [];
  const from=f.elements.start_date.value,to=f.elements.end_date.value,storeName=f.elements.store.value;
- const query=String(f.elements.query.value||'').trim().toLocaleLowerCase('pt-BR');
- const minRaw=f.elements.min_total.value,maxRaw=f.elements.max_total.value;
- const min=minRaw===''?null:Number(minRaw),max=maxRaw===''?null:Number(maxRaw);
- if((min!==null&&(!Number.isFinite(min)||min<0))||(max!==null&&(!Number.isFinite(max)||max<0)))throw Error('Os valores de filtro precisam ser positivos.');
- if(min!==null&&max!==null&&min>max)throw Error('O valor mínimo não pode superar o máximo.');
+ const category=f.elements.category.value,product=sqdMarketSearchText(f.elements.product.value);
  if(from&&to&&from>to)throw Error('A data inicial precisa ser anterior ou igual à data final.');
  return sqdMarketReceipts.filter(p=>{
   const d=String(p.purchase_date||'');
   const purchaseItems=sqdMarketReceiptLines.filter(i=>String(i.purchase_id)===String(p.id));
-  const searchable=[p.store||'',...purchaseItems.map(x=>x.name||'')].join(' ').toLocaleLowerCase('pt-BR');
-  const total=sqdMarketAmount(p.total);
-  return (!from||d>=from)&&(!to||d<=to)&&(!storeName||(storeName==='__SEM_NOME__'?!String(p.store||'').trim():String(p.store||'').trim()===storeName))&&(!query||searchable.includes(query))&&(min===null||total>=min)&&(max===null||total<=max);
+  const itemMatch=!category&&!product||purchaseItems.some(i=>(!category||String(i.category||'')===category)&&(!product||sqdMarketSearchText(i.name).includes(product)));
+  return (!from||d>=from)&&(!to||d<=to)&&(!storeName||(storeName==='__SEM_NOME__'?!String(p.store||'').trim():String(p.store||'').trim()===storeName))&&itemMatch;
  }).sort((a,b)=>String(b.purchase_date).localeCompare(String(a.purchase_date))||String(a.id).localeCompare(String(b.id)));
 }
 function sqdMarketPdfStats(){
  const out=$('#sqd-market-pdf-result');if(!out)return;
  try{const rows=sqdMarketFilteredReceipts();const value=rows.reduce((n,x)=>n+sqdMarketAmount(x.total),0);
-  out.textContent=rows.length?`${rows.length} compra(s) registrada(s) · Total ${money(value)}. Nenhum item da lista atual será incluído.`:'Nenhuma compra registrada corresponde aos filtros. Ajuste o período ou estabelecimento.';
+  out.textContent=rows.length?`${rows.length} compra(s) encontrada(s) · Total integral das compras: ${money(value)}. Cada compra será exibida com todos os itens.`:'Nenhuma compra encontrada. Revise o período, mercado, categoria ou produto.';
   for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=!rows.length;
  }catch(e){out.textContent=e.message;for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=true;}
 }
@@ -136,6 +134,8 @@ async function sqdMarketOpenPdf(type='pdf'){
   const stores=[...new Set(purchases.map(p=>String(p.store||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const select=form.elements.store;
   select.replaceChildren(new Option('Todos os estabelecimentos',''),new Option('Sem nome informado (compras antigas)','__SEM_NOME__'),...stores.map(x=>new Option(x,x)));
+  const categories=[...new Set(lines.map(i=>String(i.category||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  form.elements.category.replaceChildren(new Option('Todas as categorias',''),...categories.map(x=>new Option(x,x)));
   $('#sqd-market-pdf-format').textContent=sqdMarketExportType==='csv'?'Exportação de histórico · CSV':'Exportação de histórico · PDF';
   sqdMarketPdfStats();
  }catch(e){sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];if(status)status.textContent='Não foi possível consultar o histórico de compras. Verifique a conexão e tente novamente.';
@@ -188,7 +188,8 @@ function sqdMarketCreatePdf(receipts){
  const f=$('#sqd-market-pdf-filters');const dt1=f?.elements.start_date.value||'',dt2=f?.elements.end_date.value||'',storeName=f?.elements.store.value||'';
  const period=dt1||dt2?`${dt1?sqdMarketDate(dt1):'Início'} a ${dt2?sqdMarketDate(dt2):'Hoje'}`:'Todas as datas';
  text(`Período: ${period}`,left,y);y+=6;
- const storeLines=doc.splitTextToSize(`Estabelecimento: ${storeName==='__SEM_NOME__'?'Sem nome informado':storeName||'Todos'}${f.elements.query.value?' · Busca: '+f.elements.query.value:''}`,width);doc.text(storeLines,left,y);y+=storeLines.length*5+3;
+ const storeLines=doc.splitTextToSize(`Estabelecimento: ${storeName==='__SEM_NOME__'?'Sem nome informado':storeName||'Todos'}`,width);doc.text(storeLines,left,y);y+=storeLines.length*5+2;
+ const criteria=doc.splitTextToSize(`Categoria: ${f.elements.category.value||'Todas'} · Produto: ${f.elements.product.value||'Todos'}`,width);doc.text(criteria,left,y);y+=criteria.length*5+3;
  const total=receipts.reduce((a,x)=>a+sqdMarketAmount(x.total),0);
  fill(244,247,251);doc.roundedRect(left,y,width,19,3,3,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...muted);
  text(`${receipts.length} compra(s) finalizada(s)`,left+7,y+8);doc.setTextColor(...navy);doc.setFontSize(13);text(money(total),left+width-7,y+12,{align:'right'});
@@ -238,7 +239,7 @@ function sqdMarketDownloadPdf(){
 }
 function sqdMarketSetupPdf(){
  const host=$('#view-market');if(!host||$('#sqd-market-pdf-dialog'))return;
- host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><div class="sqd-market-report-form"><div class="sqd-market-modal-top"><div><span id="sqd-market-pdf-format" class="sqd-market-eyebrow">EXPORTAR HISTÓRICO</span><h3 id="sqd-market-pdf-title">📊 Suas compras registradas</h3><p>Somente compras finalizadas. Sua lista atual não entra no relatório.</p></div><button id="sqd-market-pdf-cancel" type="button" class="sqd-market-icon-close" aria-label="Fechar filtros">×</button></div><form id="sqd-market-pdf-filters" class="sqd-market-report-controls"><fieldset class="sqd-market-period-choices"><legend>1. Escolha o período</legend><div class="sqd-market-segments"><button type="button" data-market-preset="all" aria-pressed="true">Tudo</button><button type="button" data-market-preset="month">Este mês</button><button type="button" data-market-preset="30d">30 dias</button><button type="button" data-market-preset="today">Hoje</button><button type="button" data-market-preset="custom">Datas</button></div></fieldset><div class="sqd-market-report-fields" id="sqd-market-custom-dates" hidden><label>De<input name="start_date" type="date"></label><label>Até<input name="end_date" type="date"></label></div><label class="sqd-market-report-full">2. Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label><details class="sqd-market-advanced"><summary>⚙️ Mais filtros (opcional)</summary><div class="sqd-market-report-fields"><label class="sqd-market-report-full">Buscar produto ou mercado<input name="query" type="search" maxlength="100" placeholder="Ex.: café"></label><label>Valor mínimo (R$)<input name="min_total" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></label><label>Valor máximo (R$)<input name="max_total" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Sem limite"></label></div></details></form><div class="sqd-market-result-block"><span class="sqd-market-result-caption">PRÉVIA DA EXPORTAÇÃO</span><p id="sqd-market-pdf-result" class="sqd-market-report-preview" role="status" aria-live="polite">Consultando o histórico…</p></div><div class="sqd-market-report-actions"><button type="button" id="sqd-market-csv-download" class="btn ghost" disabled>↓ Baixar CSV</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>▤ Gerar PDF</button></div></div></dialog>`);
+ host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><div class="sqd-market-report-form"><div class="sqd-market-modal-top"><div><span id="sqd-market-pdf-format" class="sqd-market-eyebrow">EXPORTAR HISTÓRICO</span><h3 id="sqd-market-pdf-title">📊 Suas compras registradas</h3><p>Somente compras finalizadas. Sua lista atual não entra no relatório.</p></div><button id="sqd-market-pdf-cancel" type="button" class="sqd-market-icon-close" aria-label="Fechar filtros">×</button></div><form id="sqd-market-pdf-filters" class="sqd-market-report-controls"><fieldset class="sqd-market-period-choices"><legend>1. Escolha o período</legend><div class="sqd-market-segments"><button type="button" data-market-preset="all" aria-pressed="true">Tudo</button><button type="button" data-market-preset="month">Este mês</button><button type="button" data-market-preset="30d">30 dias</button><button type="button" data-market-preset="today">Hoje</button><button type="button" data-market-preset="custom">Datas</button></div></fieldset><div class="sqd-market-report-fields" id="sqd-market-custom-dates" hidden><label>De<input name="start_date" type="date"></label><label>Até<input name="end_date" type="date"></label></div><label class="sqd-market-report-full">2. Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label><details class="sqd-market-advanced"><summary>⚙️ Filtros avançados · categoria e produto</summary><div class="sqd-market-report-fields"><label class="sqd-market-report-full">Categoria<select name="category"><option value="">Todas as categorias</option></select></label><label class="sqd-market-report-full">Nome do produto<input name="product" type="search" maxlength="100" placeholder="Ex.: café, arroz, pão"></label></div><p class="sqd-market-filter-note">Filtra compras que contenham os produtos ou categorias escolhidos. O relatório mostra todos os itens dessas compras e seus valores originais.</p></details></form><div class="sqd-market-result-block"><span class="sqd-market-result-caption">PRÉVIA DA EXPORTAÇÃO</span><p id="sqd-market-pdf-result" class="sqd-market-report-preview" role="status" aria-live="polite">Consultando o histórico…</p></div><div class="sqd-market-report-actions"><button type="button" id="sqd-market-csv-download" class="btn ghost" disabled>↓ Baixar CSV</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>▤ Gerar PDF</button></div></div></dialog>`);
  const form=$('#sqd-market-pdf-filters');form.addEventListener('input',sqdMarketPdfStats);form.addEventListener('change',sqdMarketPdfStats);
  $('#sqd-market-pdf-cancel').addEventListener('click',()=>$('#sqd-market-pdf-dialog').close());
  $$('#sqd-market-pdf-dialog [data-market-preset]').forEach(b=>b.addEventListener('click',()=>sqdMarketPreset(b.dataset.marketPreset)));

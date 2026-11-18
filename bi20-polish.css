@@ -142,3 +142,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 :root[data-theme="light"] .pill.subtle{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
 :root[data-theme="light"] #transaction-form #ux04-source option,
 :root[data-theme="light"] #transaction-form #ux04-source optgroup{color:#161b37;background:#fff}
+
+/* UX09 — Mercado: controles consistentes, prévia e filtros PDF. Escopo exclusivo. */
+#view-market .sqd-market-preview{display:grid;gap:5px;padding:13px 15px;border:1px solid color-mix(in srgb,var(--primary) 32%,var(--line));background:color-mix(in srgb,var(--primary) 6%,var(--surface-2));border-radius:14px;min-width:0}
+#view-market .sqd-market-preview strong{font-size:clamp(.92rem,2vw,1.1rem);color:var(--text)}
+#view-market .sqd-market-preview small{font-size:.78rem;color:var(--muted);line-height:1.45}
+#view-market .sqd-market-select-actions{display:flex;flex:1 1 100%;gap:9px;min-width:0}
+#view-market .sqd-market-select-actions .btn{flex:1 1 0;min-width:0;text-align:center;justify-content:center;white-space:normal;line-height:1.25;padding:12px 10px}
+#view-market .bi-inline:has(.sqd-market-select-actions)>label{flex:1 1 100%;min-width:0}
+#view-market .market-checkout{display:grid;gap:12px;align-items:stretch;justify-content:stretch;min-width:0}
+#view-market .market-checkout #market-selected{display:block;min-width:0}
+#view-market #checkout-market,#view-market .sqd-market-export-actions>.btn{display:block;width:100%;max-width:none;min-width:0;text-align:center;margin:0;white-space:normal}
+#view-market .sqd-market-export-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px;min-width:0}
+#view-market .market-layout>.panel{min-width:0}
+#view-market .market-layout .panel{overflow-wrap:anywhere}
+#view-market .market-layout .form-actions{gap:10px}
+#view-market #market-items .item{flex-wrap:wrap;align-items:center;gap:9px}
+#view-market #market-items .item-left{min-width:0;flex:1 1 125px}
+#view-market #market-items .item-right{min-width:0;flex:0 1 auto}
+#view-market .sqd-market-report-dialog{border:1px solid color-mix(in srgb,var(--primary) 45%,var(--line));border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.42);width:min(95vw,550px);max-height:min(88vh,760px);overflow:auto;padding:0;color:var(--text);background:var(--surface)}
+#view-market .sqd-market-report-dialog::backdrop{background:rgba(7,9,22,.78);backdrop-filter:blur(5px)}
+#view-market .sqd-market-report-form{padding:clamp(16px,4vw,25px);display:grid;gap:16px}
+#view-market .sqd-market-report-form h3{margin:0;font-size:1.24rem}
+#view-market .sqd-market-report-form p{margin:0;color:var(--muted);line-height:1.55}
+#view-market .sqd-market-report-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#view-market .sqd-market-report-fields label{min-width:0;font-size:.84rem;font-weight:700}
+#view-market .sqd-market-report-fields :is(input,select){width:100%;margin-top:6px;min-width:0;color:var(--text);background:var(--surface-2)}
+#view-market .sqd-market-report-full{grid-column:1/-1}
+#view-market .sqd-market-report-preview{border:1px solid var(--line);padding:12px;background:var(--surface-2);border-radius:12px;font-size:.87rem;color:var(--text)!important}
+#view-market .sqd-market-report-actions{display:flex;gap:10px;align-items:stretch}
+#view-market .sqd-market-report-actions .btn{min-width:0;flex:1;white-space:normal}
+#view-market .sqd-market-report-actions .btn:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:500px){#view-market .sqd-market-select-actions .btn{font-size:.81rem;padding:11px 7px}#view-market .sqd-market-report-fields{grid-template-columns:1fr}#view-market .sqd-market-report-actions{flex-direction:column-reverse}#view-market .sqd-market-report-actions .btn{width:100%}}

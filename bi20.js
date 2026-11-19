@@ -114,17 +114,17 @@ function sqdMarketPdfStats(){
  const out=$('#sqd-market-pdf-result');if(!out)return;
  try{const rows=sqdMarketFilteredReceipts();const value=rows.reduce((n,x)=>n+sqdMarketAmount(x.total),0);
   out.textContent=rows.length?`${rows.length} compra(s) encontrada(s) · Total integral das compras: ${money(value)}. Cada compra será exibida com todos os itens.`:'Nenhuma compra encontrada. Revise o período, mercado, categoria ou produto.';
-  for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=!rows.length;
- }catch(e){out.textContent=e.message;for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=true;}
+  for(const btn of $$('#sqd-market-pdf-download,#sqd-market-xlsx-download'))btn.disabled=!rows.length;
+ }catch(e){out.textContent=e.message;for(const btn of $$('#sqd-market-pdf-download,#sqd-market-xlsx-download'))btn.disabled=true;}
 }
 let sqdMarketExportType='pdf';
 async function sqdMarketOpenPdf(type='pdf'){
- sqdMarketExportType=type==='csv'?'csv':'pdf';
+ sqdMarketExportType=(type==='xlsx'||type==='csv')?'xlsx':'pdf';
  const modal=$('#sqd-market-pdf-dialog');if(!modal)return info('Filtros do relatório indisponíveis. Reabra o aplicativo.',true);
  if(!uid())return info('Entre na sua conta para exportar o histórico.',true);
  const form=$('#sqd-market-pdf-filters');form.reset();
  sqdMarketPreset('all');
- for(const btn of $$('#sqd-market-pdf-download,#sqd-market-csv-download'))btn.disabled=true;
+ for(const btn of $$('#sqd-market-pdf-download,#sqd-market-xlsx-download'))btn.disabled=true;
  const status=$('#sqd-market-pdf-result');if(status)status.textContent='Consultando suas compras registradas…';
  if(!modal.open){if(typeof modal.showModal==='function')modal.showModal();else modal.setAttribute('open','');}
  const owner=uid();sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];
@@ -140,7 +140,7 @@ async function sqdMarketOpenPdf(type='pdf'){
   select.replaceChildren(new Option('Todos os estabelecimentos',''),new Option('Sem nome informado (compras antigas)','__SEM_NOME__'),...stores.map(x=>new Option(x,x)));
   const categories=[...new Set(lines.map(i=>String(i.category||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   form.elements.category.replaceChildren(new Option('Todas as categorias',''),...categories.map(x=>new Option(x,x)));
-  $('#sqd-market-pdf-format').textContent=sqdMarketExportType==='csv'?'Exportação de histórico · CSV':'Exportação de histórico · PDF';
+  $('#sqd-market-pdf-format').textContent=sqdMarketExportType==='xlsx'?'Exportação de histórico · Excel (.xlsx)':'Exportação de histórico · PDF';
   sqdMarketPdfStats();
  }catch(e){sqdMarketHistoryOwner=null;sqdMarketReceipts=[];sqdMarketReceiptLines=[];if(status)status.textContent='Não foi possível consultar o histórico de compras. Verifique a conexão e tente novamente.';
   info(window.SCD_USER_ERROR?.(e)||'Falha ao consultar o histórico de compras.',true);
@@ -159,6 +159,7 @@ function sqdMarketPreset(preset){
  sqdMarketPdfStats();
 }
 function dayFromDate(dt){return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`}
+/* Histórico Beta 3.0: versão CSV mantida para referência, sem execução pela interface.
 function sqdMarketDownloadCsv(){
  if(!uid()||uid()!==sqdMarketHistoryOwner)return info('Sua sessão mudou. Consulte o histórico novamente.',true);
  try{
@@ -175,6 +176,33 @@ function sqdMarketDownloadCsv(){
   $('#sqd-market-pdf-dialog')?.close();info('CSV de compras finalizadas gerado.');
  }catch(e){info(e.message||'Não foi possível exportar o CSV.',true)}
 }
+*/
+function sqdMarketDownloadExcel(){
+ if(!uid()||uid()!==sqdMarketHistoryOwner)return info('Sua sessão mudou. Consulte o histórico novamente.',true);
+ try{
+  if(!window.SCD_EXCEL?.saveWorkbook)throw Error('Exportação Excel indisponível. Reabra o aplicativo e tente novamente.');
+  const receipts=sqdMarketFilteredReceipts();
+  if(!receipts.length)return info('Nenhuma compra corresponde aos filtros.',true);
+  const rows=[];
+  for(const purchase of receipts){
+   const items=sqdMarketReceiptLines.filter(x=>String(x.purchase_id)===String(purchase.id));
+   if(!items.length)rows.push([purchase.purchase_date,purchase.store||'Não informado','Sem detalhamento','','','','','',Number(purchase.total)||0,String(purchase.id)]);
+   else for(const item of items)rows.push([
+    purchase.purchase_date,purchase.store||'Não informado',item.name,item.category||'',
+    Number(item.quantity)||0,item.unit||'un',Number(item.unit_price)||0,
+    Number(item.line_total??Number(item.quantity)*Number(item.unit_price))||0,
+    Number(purchase.total)||0,String(purchase.id)
+   ]);
+  }
+  window.SCD_EXCEL.saveWorkbook('sera-que-devo-historico-mercado-'+day()+'.xlsx',[{
+   name:'Histórico do Mercado',
+   headers:['Data','Estabelecimento','Produto','Categoria','Quantidade','Unidade','Preço unitário (R$)','Subtotal (R$)','Total da compra (R$)','ID da compra'],
+   rows,dateColumns:[0],currencyColumns:[6,7,8],widths:[17,35,43,22,16,16,21,20,23,40]
+  }]);
+  $('#sqd-market-pdf-dialog')?.close();info('Planilha Excel de compras finalizadas gerada.');
+ }catch(e){info(e.message||'Não foi possível exportar o Excel.',true)}
+}
+
 function sqdMarketCreatePdf(receipts){
  if(!window.jspdf?.jsPDF)throw Error('Biblioteca PDF indisponível. Verifique a conexão e recarregue o aplicativo.');
  const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});
@@ -243,13 +271,13 @@ function sqdMarketDownloadPdf(){
 }
 function sqdMarketSetupPdf(){
  const host=$('#view-market');if(!host||$('#sqd-market-pdf-dialog'))return;
- host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><div class="sqd-market-report-form"><div class="sqd-market-modal-top"><div><span id="sqd-market-pdf-format" class="sqd-market-eyebrow">EXPORTAR HISTÓRICO</span><h3 id="sqd-market-pdf-title">📊 Suas compras registradas</h3><p>Somente compras finalizadas. Sua lista atual não entra no relatório.</p></div><button id="sqd-market-pdf-cancel" type="button" class="sqd-market-icon-close" aria-label="Fechar filtros">×</button></div><form id="sqd-market-pdf-filters" class="sqd-market-report-controls"><fieldset class="sqd-market-period-choices"><legend>1. Escolha o período</legend><div class="sqd-market-segments"><button type="button" data-market-preset="all" aria-pressed="true">Tudo</button><button type="button" data-market-preset="month">Este mês</button><button type="button" data-market-preset="30d">30 dias</button><button type="button" data-market-preset="today">Hoje</button><button type="button" data-market-preset="custom">Datas</button></div></fieldset><div class="sqd-market-report-fields" id="sqd-market-custom-dates" hidden><label>De<input name="start_date" type="date"></label><label>Até<input name="end_date" type="date"></label></div><label class="sqd-market-report-full">2. Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label><details class="sqd-market-advanced"><summary>⚙️ Filtros avançados · categoria e produto</summary><div class="sqd-market-report-fields"><label class="sqd-market-report-full">Categoria<select name="category"><option value="">Todas as categorias</option></select></label><label class="sqd-market-report-full">Nome do produto<input name="product" type="search" maxlength="100" placeholder="Ex.: café, arroz, pão"></label></div><p class="sqd-market-filter-note">Filtra compras que contenham os produtos ou categorias escolhidos. O relatório mostra todos os itens dessas compras e seus valores originais.</p></details></form><div class="sqd-market-result-block"><span class="sqd-market-result-caption">PRÉVIA DA EXPORTAÇÃO</span><p id="sqd-market-pdf-result" class="sqd-market-report-preview" role="status" aria-live="polite">Consultando o histórico…</p></div><div class="sqd-market-report-actions"><button type="button" id="sqd-market-csv-download" class="btn ghost" disabled>↓ Baixar CSV</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>▤ Gerar PDF</button></div></div></dialog>`);
+ host.insertAdjacentHTML('beforeend',`<dialog id="sqd-market-pdf-dialog" class="sqd-market-report-dialog" aria-labelledby="sqd-market-pdf-title"><div class="sqd-market-report-form"><div class="sqd-market-modal-top"><div><span id="sqd-market-pdf-format" class="sqd-market-eyebrow">EXPORTAR HISTÓRICO</span><h3 id="sqd-market-pdf-title">📊 Suas compras registradas</h3><p>Somente compras finalizadas. Sua lista atual não entra no relatório.</p></div><button id="sqd-market-pdf-cancel" type="button" class="sqd-market-icon-close" aria-label="Fechar filtros">×</button></div><form id="sqd-market-pdf-filters" class="sqd-market-report-controls"><fieldset class="sqd-market-period-choices"><legend>1. Escolha o período</legend><div class="sqd-market-segments"><button type="button" data-market-preset="all" aria-pressed="true">Tudo</button><button type="button" data-market-preset="month">Este mês</button><button type="button" data-market-preset="30d">30 dias</button><button type="button" data-market-preset="today">Hoje</button><button type="button" data-market-preset="custom">Datas</button></div></fieldset><div class="sqd-market-report-fields" id="sqd-market-custom-dates" hidden><label>De<input name="start_date" type="date"></label><label>Até<input name="end_date" type="date"></label></div><label class="sqd-market-report-full">2. Estabelecimento<select name="store"><option value="">Todos os estabelecimentos</option></select></label><details class="sqd-market-advanced"><summary>⚙️ Filtros avançados · categoria e produto</summary><div class="sqd-market-report-fields"><label class="sqd-market-report-full">Categoria<select name="category"><option value="">Todas as categorias</option></select></label><label class="sqd-market-report-full">Nome do produto<input name="product" type="search" maxlength="100" placeholder="Ex.: café, arroz, pão"></label></div><p class="sqd-market-filter-note">Filtra compras que contenham os produtos ou categorias escolhidos. O relatório mostra todos os itens dessas compras e seus valores originais.</p></details></form><div class="sqd-market-result-block"><span class="sqd-market-result-caption">PRÉVIA DA EXPORTAÇÃO</span><p id="sqd-market-pdf-result" class="sqd-market-report-preview" role="status" aria-live="polite">Consultando o histórico…</p></div><div class="sqd-market-report-actions"><button type="button" id="sqd-market-xlsx-download" class="btn ghost" disabled>↓ Baixar Excel (.xlsx)</button><button type="button" id="sqd-market-pdf-download" class="btn primary" disabled>▤ Gerar PDF</button></div></div></dialog>`);
  const form=$('#sqd-market-pdf-filters');form.addEventListener('input',sqdMarketPdfStats);form.addEventListener('change',sqdMarketPdfStats);
  $('#sqd-market-pdf-cancel').addEventListener('click',()=>$('#sqd-market-pdf-dialog').close());
  $$('#sqd-market-pdf-dialog [data-market-preset]').forEach(b=>b.addEventListener('click',()=>sqdMarketPreset(b.dataset.marketPreset)));
  $$('#sqd-market-custom-dates input').forEach(el=>el.addEventListener('change',()=>sqdMarketPdfStats()));
  $('#sqd-market-pdf-download').addEventListener('click',sqdMarketDownloadPdf);
- $('#sqd-market-csv-download').addEventListener('click',sqdMarketDownloadCsv);
+ $('#sqd-market-xlsx-download').addEventListener('click',sqdMarketDownloadExcel);
 }
 window.SCD_MARKET_PDF={open:sqdMarketOpenPdf};
 
@@ -318,7 +346,7 @@ function compose(){
  <section id="view-bi-help" class="view"><header class="view-intro"><h2>🛡️ Ajuda, direitos e segurança</h2><p>Seu dinheiro é privado. Não solicitamos senhas bancárias, CPF ou número completo de cartão.</p></header><article class="panel"><h3>Responsável e canal oficial</h3><p>Contato de suporte, moderação e privacidade: <a href="mailto:ayranalmeidads@gmail.com">ayranalmeidads@gmail.com</a>.</p><p class="fine">Identificação legal do controlador depende da revisão e publicação final dos termos.</p></article><details class="bi-edit"><summary>＋ Registrar ocorrência ou sugestão</summary><form class="bi-form" id="bi-ticket-form"><label>Assunto<input name="subject" maxlength="120" required></label><label>Tipo<select name="category"><option value="bug">Erro no aplicativo</option><option value="privacy">Privacidade / LGPD</option><option value="security">Segurança</option><option value="complaint">Denúncia</option><option value="suggestion">Sugestão</option><option value="other">Outro</option></select></label><label>Descrição<textarea name="description" minlength="5" maxlength="2000" required></textarea></label><button class="btn primary">Enviar ocorrência</button></form></details><h3>Minhas solicitações</h3><div id="bi-ticket-list" class="bi-stack"></div>
  <details class="bi-edit" id="scd-faq-tour"><summary>❓ Perguntas frequentes</summary><div class="bi-copy"><div class="scd-faq-tour-box"><p><b>Quer conhecer o aplicativo?</b> Faça o passeio guiado pelas principais telas, no seu ritmo. Pode pular qualquer momento.</p><button type="button" id="scd-tour-replay" class="btn ghost">▶ Refazer tour pelo aplicativo</button></div><p><b>O app acessa meu banco?</b> Não. Todos os dados são informados manualmente.</p><p><b>O que é saldo projetado?</b> Estimativa considerando obrigações e receitas futuras cadastradas.</p><p><b>Como excluir ou exportar meus dados?</b> Use as opções de Conta e Privacidade; também é possível solicitar atendimento por e-mail.</p><p><b>O app oferece empréstimo?</b> Não. Simulações são educativas.</p></div></details>
  <details class="bi-edit"><summary>⚙️ Preferências de privacidade e Pandora</summary><form class="bi-form" id="bi-preferences-form"><label>Tom da Pandora<select name="pandora_tone"><option value="balanced">Equilibrado</option><option value="gentle">Acolhedor</option><option value="fun">Pop e divertido</option></select></label><label class="checkline"><input type="checkbox" name="reduce_motion"> Reduzir movimento</label><label class="checkline"><input type="checkbox" name="enlarged_text"> Texto maior</label><label class="checkline"><input type="checkbox" name="private_amounts"> Ocultar valores na tela principal</label><button class="btn primary">Salvar preferências</button></form></details>
- <article class="panel"><h3>Relatórios e dados</h3><p>Na área Relatórios você pode exportar CSV e PDF. Não compartilhe seus arquivos financeiros com desconhecidos.</p><a href="./legal/termos.html" target="_blank">Termos de uso</a> · <a href="./legal/privacidade.html" target="_blank">Política de privacidade</a></article></section>`;
+ <article class="panel"><h3>Relatórios e dados</h3><p>Na área Relatórios você pode exportar Excel (.xlsx) e PDF. Não compartilhe seus arquivos financeiros com desconhecidos.</p><a href="./legal/termos.html" target="_blank">Termos de uso</a> · <a href="./legal/privacidade.html" target="_blank">Política de privacidade</a></article></section>`;
  main.insertAdjacentHTML('beforeend',html);
  // Reinsert before footer to retain original footer at bottom.
  const foot=main.querySelector('.footer');if(foot)$$('#view-bi-accounts,#view-bi-cards,#view-bi-debts,#view-bi-recurring,#view-bi-help').forEach(el=>foot.before(el));
@@ -328,7 +356,7 @@ function compose(){
  const historyActions=$('#view-market .sqd-market-history-actions');
  const exportActions=$('#view-market .sqd-market-export-actions');
  if(historyActions&&exportActions){for(const button of [...exportActions.querySelectorAll('button')])historyActions.append(button);exportActions.remove();}
- if($('#market-export'))$('#market-export').textContent='↓ CSV do histórico';
+ if($('#market-export'))$('#market-export').textContent='↓ Excel do histórico (.xlsx)';
  if($('#market-export-pdf'))$('#market-export-pdf').textContent='▤ PDF do histórico';
  $('#market-items').insertAdjacentHTML('beforebegin','<div class="bi-inline"><label>Como foi pago?<select id="bi-account-select"><option value="">Outra forma / sem conta cadastrada</option></select><small class="fine">Pode registrar em dinheiro, Pix, cartão não cadastrado ou outra forma. Se usar VR/VA, escolha a carteira cadastrada.</small></label><button type="button" id="bi-select-all" class="btn ghost">☑ Selecionar tudo</button><button type="button" id="bi-select-none" class="btn ghost">Desmarcar tudo</button><label class="sqd-market-store-label">Nome do mercado <span class="sqd-market-required">(obrigatório ao registrar)</span><input id="bi-market-store" maxlength="120" autocomplete="organization" placeholder="Ex.: Mercado do bairro" required></label><label class="scd-tax-box">Tributos aproximados informados no cupom (R$) · opcional<input id="scd-market-tax" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Não consta? Deixe em branco"><small class="fine">Informe somente o valor destacado na nota. Não estimamos alíquotas nem somamos impostos ao gasto.</small></label></div>');
  const chooseAll=$('#bi-select-all'),chooseNone=$('#bi-select-none');if(chooseAll&&chooseNone){const group=document.createElement('div');group.className='sqd-market-select-actions';chooseAll.before(group);group.append(chooseAll,chooseNone)}
